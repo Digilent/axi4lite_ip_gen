@@ -180,7 +180,7 @@
                 {
                     "name": "EnableAcquisition",
                     "high_bit": 5,
-                    "low_bit": 6,
+                    "low_bit": 5,
                     "access_type": "rw",
                     "port": "sEnableAcquisition",
                     "clock_domain": "SysClk100"
