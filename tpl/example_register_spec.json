@@ -1,88 +1,96 @@
 
 {
+    "vendor": "digilent.com",
+    "ip_name": "TriggerControlAxiAdapter",
+    "version": "1.0",
     "axi4lite_interfaces": [
         {
             "name": "S_AXI",
             "clock_domain": "s_axi_aclk",
-            "baseaddr_offset": 0,
-            "registers": [
+            "baseaddr_offset": 0
+        }
+    ],
+    "registers": [
+        {
+            "name": "control",
+            "byte_offset": 0,
+            "of_interface": "S_AXI",
+            "bitfields": [
                 {
-                    "name": "control",
-                    "byte_offset": 0,
-                    "bitfields": [
-                        {
-                            "name": "start",
-                            "high_bit": 0,
-                            "low_bit": 0,
-                            "access_type": "rw",
-                            "port": "start",
-                            "clock_domain": "reg_clk"
-                        },
-                        {
-                            "name": "idle",
-                            "high_bit": 1,
-                            "low_bit": 1,
-                            "access_type": "ro",
-                            "port": "idle",
-                            "clock_domain": "reg_clk"
-                        }
-                    ]
+                    "name": "start",
+                    "high_bit": 0,
+                    "low_bit": 0,
+                    "access_type": "rw",
+                    "port": "start",
+                    "clock_domain": "reg_clk"
                 },
+                {
+                    "name": "idle",
+                    "high_bit": 1,
+                    "low_bit": 1,
+                    "access_type": "ro",
+                    "port": "idle",
+                    "clock_domain": "reg_clk"
+                }
+            ]
+        },
+        {
+            "name": "trigger_enable",
+            "byte_offset": 4,
+            "of_interface": "S_AXI",
+            "bitfields": [
                 {
                     "name": "trigger_enable",
-                    "byte_offset": 4,
-                    "bitfields": [
-                        {
-                            "name": "trigger_enable",
-                            "high_bit": 31,
-                            "low_bit": 0,
-                            "access_type": "rw",
-                            "port": "trigger_enable",
-                            "clock_domain": "reg_clk"
-                        }
-                    ]
-                },
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "access_type": "rw",
+                    "port": "trigger_enable",
+                    "clock_domain": "reg_clk"
+                }
+            ]
+        },
+        {
+            "name": "trigger_detected",
+            "byte_offset": 8,
+            "of_interface": "S_AXI",
+            "bitfields": [
                 {
                     "name": "trigger_detected",
-                    "byte_offset": 8,
-                    "bitfields": [
-                        {
-                            "name": "trigger_detected",
-                            "high_bit": 31,
-                            "low_bit": 0,
-                            "access_type": "ro",
-                            "port": "trigger_detected",
-                            "clock_domain": "reg_clk"
-                        }
-                    ]
-                },
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "access_type": "ro",
+                    "port": "trigger_detected",
+                    "clock_domain": "reg_clk"
+                }
+            ]
+        },
+        {
+            "name": "posttrigger_beats",
+            "byte_offset": 12,
+            "of_interface": "S_AXI",
+            "bitfields": [
                 {
                     "name": "posttrigger_beats",
-                    "byte_offset": 12,
-                    "bitfields": [
-                        {
-                            "name": "posttrigger_beats",
-                            "high_bit": 31,
-                            "low_bit": 0,
-                            "access_type": "rw",
-                            "port": "posttrigger_beats",
-                            "clock_domain": "reg_clk"
-                        }
-                    ]
-                },
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "access_type": "rw",
+                    "port": "posttrigger_beats",
+                    "clock_domain": "reg_clk"
+                }
+            ]
+        },
+        {
+            "name": "prebuffer_beats",
+            "byte_offset": 16,
+            "of_interface": "S_AXI",
+            "bitfields": [
                 {
                     "name": "prebuffer_beats",
-                    "byte_offset": 16,
-                    "bitfields": [
-                        {
-                            "name": "prebuffer_beats",
-                            "high_bit": 31,
-                            "low_bit": 0,
-                            "access_type": "rw",
-                            "port": "prebuffer_beats",
-                            "clock_domain": "reg_clk"
-                        }
-                    ]
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "access_type": "rw",
+                    "port": "prebuffer_beats",
+                    "clock_domain": "reg_clk"
                 }
             ]
         }
