@@ -2,9 +2,11 @@
 package require json
 
 set script_dir [file dirname [file normalize [info script]]]
+source [file join $script_dir util.tcl]
 
 # Read the JSON input file
-set specfile_path [file join ${script_dir} "tpl" "example_register_spec.json"]
+set templates_dir [file join ${script_dir} "tpl"]
+set specfile_path [file join ${templates_dir} "example_register_spec.json"]
 set specfile [open $specfile_path r]
 set specdata_json [read $specfile]
 close $specfile
@@ -45,17 +47,14 @@ create_peripheral $vendor user $name $version -dir $repo
 foreach interface [dict get $specdata "axi4lite_interfaces"] {
     set interface_name [dict get $interface "name"]
 
-    set num_regs 0
-    foreach register [dict get $specdata "registers"] {
-        if {[dict get $register "of_interface"] == $interface_name} {
-            incr num_regs
-        }
-    }
+    set num_regs [get_num_regs $specdata $interface]
     puts "[dict get $interface name]: $num_regs"
 
     add_peripheral_interface [dict get $interface name] -interface_mode slave -axi_type lite [ipx::find_open_core $vlnv]
     set_property VALUE $num_regs [ipx::get_bus_parameters WIZ_NUM_REG -of_objects [ipx::get_bus_interfaces  -of_objects [ipx::find_open_core $vlnv]]]
 }
+## find addr_width
+
 
 generate_peripheral -force -driver -bfm_example_design -debug_hw_example_design [ipx::find_open_core $vlnv]
 write_peripheral [ipx::find_open_core $vlnv]
@@ -90,7 +89,9 @@ set ip_path [file dirname $component_path]
 set top_file_path [file join $ip_path src ${name}_v${major_version}_${minor_version}.v]
 
 ## Write CDC HDL file
-set cdc_file_path [file join $ip_path src ${name}_cdc.vhd]
+source [file join $script_dir write_cdc.tcl]
+
+## Write software drivers
 
 # Import HLS-exported sources
 
