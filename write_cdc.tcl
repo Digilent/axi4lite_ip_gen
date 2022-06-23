@@ -22,7 +22,7 @@ set num_regs [expr [llength [dict get $specdata registers]] + [dict get $interfa
 
 set addr_width [clog2 $num_regs]
 set module_name [file rootname [file tail $specfile_path]]
-set hls_module ZmodScopeConfig
+set hls_module [dict get $specdata ip_name]
 
 proc get_prefix {specdata clock_name} {
     foreach clock [dict get $specdata clocks] {
@@ -33,74 +33,27 @@ proc get_prefix {specdata clock_name} {
     return ""
 }
 
-set cdc_domain_pairs [list]
-set cdc_signals [dict create]
-foreach from_domain [dict get $specdata clocks] {
-    set subdict [dict create]
-    foreach to_domain [dict get $specdata clocks] {
-        dict set subdict [dict get $to_domain name] [list]
-    }
-    dict set cdc_signals [dict get $from_domain name] $subdict
+# Set up nested dicts ordered such that the template can easily iterate through ports while instantiating CDC modules
+#   ports_by_domain_and_direction is indexed first by the name of the non-AXI clock that the CDC is connected to,
+#   then by the direction (in or out) of the CDC with respect to the AXI interface, then a final dict is provided with
+#   a 'ports' field and a 'num_bits' field
+#   ports lists the appropriate bitfields from the spec, with all of their spec fields intact and
+#     io_direction and width fields added
+#   num_bits contains the sum of the widths of all bitfields with that direction and clock domain
 
-}
-
-proc signal_insert {signal key1 key2 cdc_signals} {
-    # since tcl generally doesn't return by reference, pull the lower level dict out of the one containing it, set it's value, and then set it back into the container
-    
-    set d1 [dict get $cdc_signals $key1]
-    set d2 [dict get $d1 $key2]
-    
-    lappend d2 $signal
-
-    dict set d1 $key2 $d2
-    dict set cdc_signals $key1 $d1
-
-    return $cdc_signals
-}
-
-foreach register [dict get $specdata registers] {
-    foreach bitfield [dict get $register bitfields] {
-        if {[dict get $bitfield access_type] == "ro"} {
-            set io_direction in
-            set from_domain [dict get $interface clock_domain]
-            set to_domain [dict get $bitfield clock_domain]
-        } else {
-            set io_direction out
-            set to_domain [dict get $interface clock_domain]
-            set from_domain [dict get $bitfield clock_domain]
-        }
-        set bitfield_name [dict get $bitfield name]
-        # make a list of the clock domains that signals are synchronous with, then fill that with signals
-        
-        if {$from_domain == $to_domain} {
-            set cdc_type none
-        } else {
-            # each cdc consists of three signals, one output from the hls module, one flop, and one synchronous to the end domain
-            set cdc_type single_bit
-            set sig [dict create]
-            dict set sig register [dict get $register name]
-            dict set sig bitfield [dict get $bitfield name]
-            dict set sig io_direction $io_direction
-            puts "[dict get $bitfield name] : $io_direction"
-            dict set sig width [expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit] + 1]
-            dict set sig name ${bitfield_name}
-            dict set sig clock_domain [dict get $bitfield clock_domain]
-            set cdc_signals [signal_insert $sig $from_domain $to_domain $cdc_signals]
-        }
-
-        # set up information for handshake controllers
-        set pair [dict create]
-        dict set pair from_domain $from_domain
-        dict set pair to_domain $to_domain 
-        dict set pair from_prefix [get_prefix $specdata $from_domain]
-        dict set pair to_prefix [get_prefix $specdata $to_domain]
-        if {[lsearch $cdc_domain_pairs $pair] == -1} {
-            lappend cdc_domain_pairs $pair
-        }
-    }
-}
-
-
+# [dict]
+#   (clock_name): [dict]
+#     in|out: [dict]
+#       num_bits: int
+#       ports: [list]
+#         : bitfield
+#           name: str
+#           high_bit: int
+#           low_bit: int
+#           width: int
+#           access_type: ro|rw|wo
+#           io_direction: in|out
+#           clock_domain: (clock_name)
 
 set ports_by_domain_and_direction [dict create]
 foreach domain [dict get $specdata clocks] {

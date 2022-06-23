@@ -61,7 +61,7 @@ generic (
 % set interface [dict get $specdata axi4lite_interface]
     C_[string toupper [dict get $interface name]]_ADDR_WIDTH : INTEGER := ${addr_width};
     C_[string toupper [dict get $interface name]]_DATA_WIDTH : INTEGER := 32
-    );
+);
 port (
     ap_clk : IN STD_LOGIC;
     ap_rst_n : IN STD_LOGIC;
@@ -101,7 +101,7 @@ port (
     [dict get $interface name]_BREADY : IN STD_LOGIC;
     [dict get $interface name]_BRESP : OUT STD_LOGIC_VECTOR (1 downto 0);
     interrupt : OUT STD_LOGIC
-    );
+);
 end component;
 
 component HandshakeData is
@@ -122,6 +122,17 @@ port (
 );
 end component;
 
+component ResetBridge is
+generic (
+    kPolarity : std_logic := '1'
+);
+port (
+    aRst : in STD_LOGIC; -- asynchronous reset; active-high, if kPolarity=1
+    OutClk : in STD_LOGIC;
+    oRst : out STD_LOGIC
+);
+end component;
+
 -- HLS interrupt flag
 signal [get_prefix $specdata [dict get $interface clock_domain]]Interrupt : STD_LOGIC;
 
@@ -129,16 +140,16 @@ signal [get_prefix $specdata [dict get $interface clock_domain]]Interrupt : STD_
 
 % foreach clock_domain [dict get $specdata clocks] {
 signal [get_prefix $specdata [dict get ${clock_domain} name]]Rst_n : STD_LOGIC;
+signal [get_prefix $specdata [dict get ${clock_domain} name]]Rst : STD_LOGIC;
 
 % }
 
 -- Internal signals for ports
 
 % set interface_prefix [get_prefix $specdata [dict get $interface clock_domain]]
-% foreach {from_domain to_domains} $cdc_signals {
-%   foreach {to_domain signals} $to_domains {
-%     foreach {signal} $signals {
-%       set io_direction [dict get $signal io_direction]
+% foreach {domain domain_ports} $ports_by_domain_and_direction {
+%   foreach {direction cdc_group} $domain_ports {
+%     foreach signal [dict get $cdc_group ports] {
 %       set domain_prefix [get_prefix $specdata [dict get $signal clock_domain]]
 %       set signal_name [dict get $signal name]
 %       if {[dict get $signal width] != 1} {
@@ -148,13 +159,14 @@ signal [get_prefix $specdata [dict get ${clock_domain} name]]Rst_n : STD_LOGIC;
 %       }
 signal ${interface_prefix}${signal_name} : ${signal_type};
 
-%       if {$io_direction == "out"} {
+%       if {$direction == "out"} {
 signal ${domain_prefix}${signal_name}Int : ${signal_type};
 
 %       }
 %     }
 %   }
 % }
+
 
 begin
 
@@ -216,6 +228,7 @@ port map (
     outClk => ${clock},
     oRst => [get_prefix $specdata ${clock}]Rst_n
 );
+[get_prefix $specdata ${clock}]Rst <= not [get_prefix $specdata ${clock}]Rst_n;
 
 %   }
 % }
@@ -283,8 +296,8 @@ port map(
     iRdy => open, -- unused? no point in applying backpressure to the hls core, axi lite transactions should be infrequent enough
     oAck => '1', -- tie high, don't apply any backpressure to this
     oValid => open, -- unused? no downstream register write enable is needed
-    aiReset => not ${iprefix}Rst_n,
-    aoReset => not ${oprefix}Rst_n
+    aiReset => ${iprefix}Rst,
+    aoReset => ${oprefix}Rst
 );
 
 %   }
