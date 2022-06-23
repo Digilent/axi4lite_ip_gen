@@ -3,19 +3,35 @@
     "vendor": "digilent.com",
     "ip_name": "TriggerControlAxiAdapter",
     "version": "1.0",
-    "axi4lite_interfaces": [
+    "axi4lite_interface": {
+        "name": "s_axi_control",
+        "clock_domain": "s_axi_control_clk",
+        "resetn_port": "s_axi_control_rst_n",
+        "baseaddr_offset": 0
+    },
+    "clocks": [
         {
-            "name": "s_axi_control",
-            "clock_domain": "s_axi_control_clk",
-            "resetn_port": "s_axi_control_rst_n",
-            "baseaddr_offset": 0
+            "name": "ADC_SamplingClock",
+            "prefix": "c"
+        },
+        {
+            "name": "SysClk100",
+            "prefix": "s"
+        },
+        {
+            "name": "s_axi_control_clk",
+            "prefix": "l"
+        }
+    ],
+    "resets": [
+        {
+            "name": "s_axi_control_rst_n"
         }
     ],
     "registers": [
         {
             "name": "ch1LgMultCoef",
             "byte_offset": 16,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "ch1LgMultCoef",
@@ -30,7 +46,6 @@
         {
             "name": "ch1LgAddCoef",
             "byte_offset": 24,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "ch1LgAddCoef",
@@ -45,7 +60,6 @@
         {
             "name": "ch1HgMultCoef",
             "byte_offset": 32,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "ch1HgMultCoef",
@@ -60,7 +74,6 @@
         {
             "name": "ch1HgAddCoef",
             "byte_offset": 40,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "ch1HgAddCoef",
@@ -75,7 +88,6 @@
         {
             "name": "ch2LgMultCoef",
             "byte_offset": 48,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "ch2LgMultCoef",
@@ -90,7 +102,6 @@
         {
             "name": "ch2LgAddCoef",
             "byte_offset": 56,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "ch2LgAddCoef",
@@ -105,7 +116,6 @@
         {
             "name": "ch2HgMultCoef",
             "byte_offset": 64,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "ch2HgMultCoef",
@@ -120,7 +130,6 @@
         {
             "name": "ch2HgAddCoef",
             "byte_offset": 72,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "ch2HgAddCoef",
@@ -135,7 +144,6 @@
         {
             "name": "config",
             "byte_offset": 80,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "Ch1Gain",
@@ -198,7 +206,6 @@
         {
             "name": "status",
             "byte_offset": 88,
-            "of_interface": "s_axi_control",
             "bitfields": [
                 {
                     "name": "RstBusy",
