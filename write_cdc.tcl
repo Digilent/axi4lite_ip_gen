@@ -100,6 +100,50 @@ foreach register [dict get $specdata registers] {
     }
 }
 
+
+
+set ports_by_domain_and_direction [dict create]
+foreach domain [dict get $specdata clocks] {
+    if {[dict get $domain name] != [dict get [dict get $specdata axi4lite_interface] clock_domain]} {
+        set ports_by_direction [dict create]
+        foreach direction {in out} {
+            set cdc_group [dict create]
+            dict set cdc_group num_bits 0
+            dict set cdc_group ports [list]
+            dict set ports_by_direction $direction $cdc_group
+        }
+        dict set ports_by_domain_and_direction [dict get $domain name] $ports_by_direction
+    }
+}
+puts $ports_by_domain_and_direction
+
+foreach register [dict get $specdata registers] {
+    foreach bitfield [dict get $register bitfields] {
+        set bitfield_domain [dict get $bitfield clock_domain]
+        set ports_by_direction [dict get $ports_by_domain_and_direction $bitfield_domain]
+        
+        set bitfield_width [expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit] + 1]
+        set access_type [dict get $bitfield access_type]
+        if {[dict get $bitfield access_type] == "ro"} {
+            set io_direction in
+        } else {
+            set io_direction out
+        }
+        
+        set cdc_group [dict get $ports_by_direction $io_direction]
+        set ports [dict get $cdc_group ports]
+
+        dict set bitfield width $bitfield_width
+        dict set bitfield io_direction $io_direction
+        lappend ports $bitfield
+
+        dict set cdc_group num_bits [expr [dict get $cdc_group num_bits] + $bitfield_width]
+        dict set cdc_group ports $ports
+        dict set ports_by_direction $io_direction $cdc_group
+        dict set ports_by_domain_and_direction $bitfield_domain $ports_by_direction
+    }
+}
+
 # load the template
 set cdc_tmpl [open $tplfile_path r]
 set tmpl [read $cdc_tmpl]

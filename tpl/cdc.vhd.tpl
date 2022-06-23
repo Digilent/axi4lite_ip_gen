@@ -34,7 +34,6 @@ port (
 %     }
 %   }
 % }
-
     [dict get $interface name]_AWVALID : IN STD_LOGIC;
     [dict get $interface name]_AWREADY : OUT STD_LOGIC;
     [dict get $interface name]_AWADDR : IN STD_LOGIC_VECTOR (C_[string toupper [dict get $interface name]]_ADDR_WIDTH-1 downto 0);
@@ -64,7 +63,6 @@ generic (
     C_[string toupper [dict get $interface name]]_DATA_WIDTH : INTEGER := 32
     );
 port (
-
     ap_clk : IN STD_LOGIC;
     ap_rst_n : IN STD_LOGIC;
 
@@ -85,7 +83,6 @@ port (
 %     }
 %   }
 % }
-
     [dict get $interface name]_AWVALID : IN STD_LOGIC;
     [dict get $interface name]_AWREADY : OUT STD_LOGIC;
     [dict get $interface name]_AWADDR : IN STD_LOGIC_VECTOR (C_[string toupper [dict get $interface name]]_ADDR_WIDTH-1 downto 0);
@@ -107,58 +104,35 @@ port (
     );
 end component;
 
-component ResetBridge is
-    Generic (
-        kPolarity : std_logic := '1');
-    Port (
-        aRst : in STD_LOGIC; -- asynchronous reset; active-high, if kPolarity=1
-        OutClk : in STD_LOGIC;
-        oRst : out STD_LOGIC);
-end component;
-
-component ack_gen is
+component HandshakeData is
+generic (
+    kDataWidth : natural := 8
+);
 port (
-    ap_clk : IN STD_LOGIC;
-    ap_rst : IN STD_LOGIC;
-    inLoad : IN STD_LOGIC_VECTOR (0 downto 0);
-    inReq : IN STD_LOGIC_VECTOR (0 downto 0);
-    outAck : OUT STD_LOGIC_VECTOR (0 downto 0);
-    outValid : OUT STD_LOGIC_VECTOR (0 downto 0);
-    outLoadData : OUT STD_LOGIC_VECTOR (0 downto 0) );
+    InClk : in STD_LOGIC;
+    OutClk : in STD_LOGIC;
+    iData : in STD_LOGIC_VECTOR (kDataWidth-1 downto 0);
+    oData : out STD_LOGIC_VECTOR (kDataWidth-1 downto 0);
+    iPush : in STD_LOGIC;
+    iRdy : out STD_LOGIC;
+    oAck : in STD_LOGIC := '1';
+    oValid : out STD_LOGIC;
+    aiReset : in std_logic;
+    aoReset : in std_logic
+);
 end component;
 
-component req_gen is
-port (
-    ap_clk : IN STD_LOGIC;
-    ap_rst : IN STD_LOGIC;
-    inSend : IN STD_LOGIC_VECTOR (0 downto 0);
-    inAck : IN STD_LOGIC_VECTOR (0 downto 0);
-    outReq : OUT STD_LOGIC_VECTOR (0 downto 0);
-    outReady : OUT STD_LOGIC_VECTOR (0 downto 0);
-    outLoadData : OUT STD_LOGIC_VECTOR (0 downto 0) );
-end component;
-
+-- HLS interrupt flag
 signal [get_prefix $specdata [dict get $interface clock_domain]]Interrupt : STD_LOGIC;
+
+-- Reset signals for each clock domain
 
 % foreach clock_domain [dict get $specdata clocks] {
 signal [get_prefix $specdata [dict get ${clock_domain} name]]Rst_n : STD_LOGIC;
 
 % }
--- CDC flags
 
-% foreach cdc $cdc_domain_pairs {
-%   set from [dict get $cdc from_prefix]
-%   set to [dict get $cdc to_prefix]
-signal ${to}${from}AckCDC : STD_LOGIC;
-signal ${from}${to}ReqCDC : STD_LOGIC;
-signal ${from}LoadData : STD_LOGIC;
-signal ${from}${to}LoadData : STD_LOGIC;
-
-%   if {[dict get $cdc to_domain] == [dict get $interface clock_domain]} {
-signal ${from}${to}Ready : STD_LOGIC;
-
-%   }
-% }
+-- Internal signals for ports
 
 % set interface_prefix [get_prefix $specdata [dict get $interface clock_domain]]
 % foreach {from_domain to_domains} $cdc_signals {
@@ -167,28 +141,16 @@ signal ${from}${to}Ready : STD_LOGIC;
 %       set io_direction [dict get $signal io_direction]
 %       set domain_prefix [get_prefix $specdata [dict get $signal clock_domain]]
 %       set signal_name [dict get $signal name]
-%       if {$io_direction == "in"} {
-%         if {[dict get $signal width] != 1} {
-signal ${domain_prefix}${signal_name}_CDC : STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0);
-signal ${interface_prefix}${signal_name} : STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0);
-
-%         } else {
-signal ${domain_prefix}${signal_name}_CDC : STD_LOGIC;
-signal ${interface_prefix}${signal_name} : STD_LOGIC;
-
-%         }
+%       if {[dict get $signal width] != 1} {
+%         set signal_type {STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0)}
 %       } else {
-%         if {[dict get $signal width] != 1} {
-signal ${domain_prefix}${signal_name}Int : STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0);
-signal ${interface_prefix}${signal_name}_CDC : STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0);
-signal ${interface_prefix}${signal_name} : STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0);
+%         set signal_type {STD_LOGIC}
+%       }
+signal ${interface_prefix}${signal_name} : ${signal_type};
 
-%         } else {
-signal ${domain_prefix}${signal_name}Int : STD_LOGIC;
-signal ${interface_prefix}${signal_name}_CDC : STD_LOGIC;
-signal ${interface_prefix}${signal_name} : STD_LOGIC;
+%       if {$io_direction == "out"} {
+signal ${domain_prefix}${signal_name}Int : ${signal_type};
 
-%         }
 %       }
 %     }
 %   }
@@ -196,7 +158,8 @@ signal ${interface_prefix}${signal_name} : STD_LOGIC;
 
 begin
 
--- Instantiate HLS IP
+--- Instantiate HLS register file core
+
 ${hls_module}_inst: ${hls_module} port map(
     ap_clk => [dict get $interface clock_domain],
     ap_rst_n => [dict get $interface reset],
@@ -240,9 +203,11 @@ ${hls_module}_inst: ${hls_module} port map(
 % foreach clock_domain [dict get $specdata clocks] {
 %   set clock [dict get $clock_domain name] 
 %   if {$clock == [dict get ${interface} clock_domain]} {
+
 [get_prefix $specdata ${clock}]Rst_n <= [dict get ${interface} reset];
 
 %   } else {
+
 [dict get ${interface} clock_domain]_to_${clock}_rst: ResetBridge generic map(
     kPolarity => '0'
 )
@@ -255,189 +220,72 @@ port map (
 %   }
 % }
 
---- Map Internal ports to Int signals
+--- Map external output ports to internal signals
+
 % foreach {from_domain to_domains} $cdc_signals {
 %   foreach {to_domain signals} $to_domains {
 %     foreach signal $signals {
-%       if {$from_domain == [dict get $interface clock_domain]} {
-%         set prefix [get_prefix $specdata $to_domain]
-%       } else {
-%         set prefix [get_prefix $specdata $from_domain]
-%       }
+%       set prefix [get_prefix $specdata [dict get $signal clock_domain]]
 %       if {[dict get $signal io_direction] == "out"} {
 
 ${prefix}[dict get $signal name] <= ${prefix}[dict get $signal name]Int;
+
 %       }
 %     }
 %   }
 % }
 
+--- Instantiate handshake clock domain crossing modules
 
--- CDC flags
--- todo: check if these are actually used or not
-
-% set interface_domain [dict get $interface clock_domain]
-% set interface_prefix [get_prefix $specdata $interface_domain]
-% foreach clock_domain [dict get $specdata clocks] {
-%   set domain [dict get $clock_domain name]
-%   if {[dict get $interface clock_domain] != ${domain}} {
-%     set domain_prefix [get_prefix $specdata ${domain}]
-
--- Handshake request from ${interface_domain} to ${domain}
-${interface_domain}_to_${domain}_req: req_gen port map(
-    ap_clk => ${interface_domain},
-    ap_rst => ${interface_prefix}Rst_n,
-    inSend(0) => ${interface_prefix}Interrupt, -- output path fed by HLS interrupt
-    inAck(0) => ${domain_prefix}${interface_prefix}AckCDC,
-    outReq(0) => ${interface_prefix}${domain_prefix}ReqCDC,
-    outLoadData(0) => ${interface_prefix}${domain_prefix}LoadData
-);
--- Handshake acknowledge from ${domain} to ${interface_domain}
-${interface_domain}_to_${domain}_ack: ack_gen port map(
-    ap_clk => ${domain},
-    ap_rst => ${domain_prefix}Rst_n,
-    inLoad(0) => '1',
-    inReq(0) => ${interface_prefix}${domain_prefix}ReqCDC,
-    outAck(0) => ${domain_prefix}${interface_prefix}AckCDC,
-    outLoadData(0) => ${domain_prefix}LoadData
-);
-
--- Handshake request from ${domain} to ${interface_domain}
--- It will send the data whenever it is ready
-${domain}_to_${interface_domain}_req: req_gen port map(
-    ap_clk => ${domain},
-    ap_rst => ${domain_prefix}Rst_n,
-    inSend(0) => ${domain_prefix}${interface_prefix}Ready, -- input path continuously writes back
-    inAck(0) => ${interface_prefix}${domain_prefix}AckCDC,
-    outReady(0) => ${domain_prefix}${interface_prefix}Ready,
-    outReq(0) => ${domain_prefix}${interface_prefix}ReqCDC,
-    outLoadData(0) => ${domain_prefix}${interface_prefix}LoadData
-);
--- Handshake acknowledge from ${interface_domain} to ${domain}
-${domain}_to_${interface_domain}_ack: ack_gen port map(
-    ap_clk => ${interface_domain},
-    ap_rst => ${interface_prefix}Rst_n,
-    inLoad(0) => '1',
-    inReq(0) => ${domain_prefix}${interface_prefix}ReqCDC,
-    outAck(0) => ${interface_prefix}${domain_prefix}AckCDC,
-    outLoadData(0) => ${interface_prefix}LoadData
-);
-
-
-%   }
-% }
-
--- Handle CDC registers
-
-% foreach {from_domain to_domains} $cdc_signals {
-%   set from_prefix [get_prefix $specdata $from_domain]
-%   foreach {to_domain signals} $to_domains {
-%     if {[llength $signals] == 0} {continue}
-
--- Register status flags in ${from_domain} domain before clock domain crossing to ${to_domain}
-${from_domain}_to_${to_domain}_pre_cdc: process(${from_domain}, ${from_prefix}Rst_n)
-begin
-    if (rising_edge(${from_domain})) then
-        if (${from_prefix}Rst_n = '0') then
-
-%     foreach {signal} $signals {
-%       set io_direction [dict get $signal io_direction]
-%       set domain_prefix [get_prefix $specdata [dict get $signal clock_domain]]
-%       set signal_name [dict get $signal name]
-%       if {$io_direction == "in"} {
-%         set left_prefix ${domain_prefix}
-%         set right_prefix ${interface_prefix}
-%       } else {
-%         set left_prefix ${interface_prefix}
-%         set right_prefix ${domain_prefix}
-%       }
-%       if {[dict get $signal width] != 1} {
-            ${left_prefix}${signal_name}_CDC <= (others => '0');
-
-%       } else {
-            ${left_prefix}${signal_name}_CDC <= '0';
-
-%       }
+% foreach {domain domain_ports} $ports_by_domain_and_direction {
+%   foreach {direction cdc_group} $domain_ports {
+%     set low_index 0
+%     if {$direction == "in"} {
+%       set iprefix [get_prefix $specdata $domain]
+%       set oprefix [get_prefix $specdata [dict get $interface clock_domain]]
+%       set opostfix ""
+%       set pushsignal {'1'}
+%       set inclk $domain
+%       set outclk [dict get $interface clock_domain]
+%     } else {
+%       set opostfix "Int"
+%       set pushsignal "[get_prefix $specdata [dict get $interface clock_domain]]Interrupt"
+%       set inclk [dict get $interface clock_domain]
+%       set outclk $domain
 %     }
-        else
-            if (${left_prefix}${right_prefix}LoadData = '1') then
+%     set iprefix [get_prefix $specdata $inclk]
+%     set oprefix [get_prefix $specdata $outclk]
 
-%     foreach {signal} $signals {
-%       set io_direction [dict get $signal io_direction]
-%       set domain_prefix [get_prefix $specdata [dict get $signal clock_domain]]
-%       set signal_name [dict get $signal name]
-%       if {$io_direction == "in"} {
-%         set prefix ${domain_prefix}
+-- Handshake CDC from ${inclk} to ${outclk}
+${inclk}_to_${outclk}_cdc: HandshakeData 
+generic map (
+    kDataWidth => [dict get $cdc_group num_bits]
+)
+port map(
+    InClk => ${inclk},
+    OutClk => ${outclk},
+
+%     foreach port [dict get $cdc_group ports] {
+%       set width [dict get $port width]
+%       if {$width > 1} {
+    iData([expr $low_index + $width - 1] downto $low_index) => ${iprefix}[dict get $port name],
+    oData([expr $low_index + $width - 1] downto $low_index) => ${oprefix}[dict get $port name]${opostfix},
+
 %       } else {
-%         set prefix ${interface_prefix}
-%       }
-            ${prefix}${signal_name}_CDC <= ${prefix}${signal_name};
-            end if;
-        end if;
-    end if;
+    iData($low_index) => ${iprefix}[dict get $port name],
+    oData($low_index) => ${oprefix}[dict get $port name]${opostfix},
 
+%       }
+%       set low_index [expr $low_index + $width]
 %     }
-end process;
-
-%   }
-% }
-
-% foreach {from_domain to_domains} $cdc_signals {
-%   set from_prefix [get_prefix $specdata $from_domain]
-%   foreach {to_domain signals} $to_domains {
-%     set to_prefix [get_prefix $specdata $to_domain]
-%     if {[llength $signals] == 0} {continue}
-
--- Register configuration in ${to_domain} domain after clock domain crossing from ${from_domain}
-${from_domain}_to_${to_domain}_post_cdc: process(${to_domain}, ${to_prefix}Rst_n)
-begin
-    if(rising_edge(${to_domain})) then
-        if (${to_prefix}Rst_n = '0') then
-
-%     foreach {signal} $signals {
-%       set io_direction [dict get $signal io_direction]
-%       set domain_prefix [get_prefix $specdata [dict get $signal clock_domain]]
-%       set signal_name [dict get $signal name]
-%       if {$io_direction == "in"} {
-%         set left_prefix ${interface_prefix}
-%         set right_prefix ${domain_prefix}
-%         set postfix ""
-%       } else {
-%         set left_prefix ${domain_prefix}
-%         set right_prefix ${interface_prefix}
-%         set postfix "Int"
-%       }
-%       if {[dict get $signal width] != 1} {
-            ${left_prefix}${signal_name}${postfix} <= (others => '0');
-
-%       } else {
-            ${left_prefix}${signal_name}${postfix} <= '0';
-
-%       }
-%     }
-        else
-            if (${left_prefix}LoadData = '1') then
-
-%     foreach {signal} $signals {
-%       set io_direction [dict get $signal io_direction]
-%       set domain_prefix [get_prefix $specdata [dict get $signal clock_domain]]
-%       set signal_name [dict get $signal name]
-%       if {$io_direction == "in"} {
-%         set left_prefix ${interface_prefix}
-%         set right_prefix ${domain_prefix}
-%         set postfix ""
-%       } else {
-%         set left_prefix ${domain_prefix}
-%         set right_prefix ${interface_prefix}
-%         set postfix "Int"
-%       }
-                ${left_prefix}${signal_name}${postfix} <= ${right_prefix}${signal_name}_CDC;
-            end if;
-        end if;
-    end if;
-
-%     }
-end process;
+% 
+    iPush => ${pushsignal},
+    iRdy => open, -- unused? no point in applying backpressure to the hls core, axi lite transactions should be infrequent enough
+    oAck => '1', -- tie high, don't apply any backpressure to this
+    oValid => open, -- unused? no downstream register write enable is needed
+    aiReset => not ${iprefix}Rst_n,
+    aoReset => not ${oprefix}Rst_n
+);
 
 %   }
 % }
