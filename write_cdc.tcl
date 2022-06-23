@@ -1,11 +1,12 @@
-source [file dirname [info script]]/util.tcl
+set script_dir [file dirname [file normalize [info script]]]
+source ${script_dir}/util.tcl
+
 set outfile_path ${script_dir}/out/cdc.vhd
 set tplfile_path ${script_dir}/tpl/cdc.vhd.tpl
 set specfile_path ${script_dir}/tpl/example.json
 
 #script has no calling context, so set up data for testing
 package require json
-set script_dir [file dirname [file normalize [info script]]]
 
 source [file join $script_dir util.tcl]
 
@@ -44,15 +45,16 @@ foreach from_domain [dict get $specdata clocks] {
 
 }
 
-proc signal_insert {signal from_domain to_domain cdc_signals} {
+proc signal_insert {signal key1 key2 cdc_signals} {
     # since tcl generally doesn't return by reference, pull the lower level dict out of the one containing it, set it's value, and then set it back into the container
-    set d1 [dict get $cdc_signals $from_domain]
-    set d2 [dict get $d1 $to_domain]
+    
+    set d1 [dict get $cdc_signals $key1]
+    set d2 [dict get $d1 $key2]
     
     lappend d2 $signal
 
-    dict set d1 $to_domain $d2
-    dict set cdc_signals $from_domain $d1
+    dict set d1 $key2 $d2
+    dict set cdc_signals $key1 $d1
 
     return $cdc_signals
 }
@@ -70,6 +72,7 @@ foreach register [dict get $specdata registers] {
         }
         set bitfield_name [dict get $bitfield name]
         # make a list of the clock domains that signals are synchronous with, then fill that with signals
+        
         if {$from_domain == $to_domain} {
             set cdc_type none
         } else {
