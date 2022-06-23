@@ -5,7 +5,7 @@
     "axi4lite_interface": {
         "name": "S_AXI",
         "clock_domain": "s_axi_aclk",
-        "baseaddr_offset": 0,
+        "reserved_addresses": 3,
         "reset": "s_axi_areset_n"
     },
     "clocks": [
@@ -20,8 +20,9 @@
     ],
     "registers": [
         {
+            "comment": ["all registers should be placed in ascending order of address in the register file and",
+                        "start with base address [axi4lite_interface][reserved_addresses] * sizeof(u32)"],
             "name": "control",
-            "byte_offset": 0,
             "bitfields": [
                 {
                     "name": "Start",

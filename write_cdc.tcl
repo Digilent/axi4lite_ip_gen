@@ -18,10 +18,9 @@ set specdata [::json::json2dict $specdata_json]
 
 # fixme; only handles last interface
 set interface [dict get $specdata axi4lite_interface]
-set num_regs [llength [dict get $specdata registers]]
+set num_regs [expr [llength [dict get $specdata registers]] + [dict get $interface reserved_addresses]]
 
-#set addr_width [clog2 $num_regs]
-set addr_width 4
+set addr_width [clog2 $num_regs]
 set module_name [file rootname [file tail $specfile_path]]
 set hls_module ZmodScopeConfig
 
