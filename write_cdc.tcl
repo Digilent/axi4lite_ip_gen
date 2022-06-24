@@ -16,7 +16,6 @@ set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
 
-# fixme; only handles last interface
 set interface [dict get $specdata axi4lite_interface]
 set num_regs [expr [llength [dict get $specdata registers]] + [dict get $interface reserved_addresses]]
 
@@ -71,23 +70,24 @@ foreach domain [dict get $specdata clocks] {
 puts $ports_by_domain_and_direction
 
 foreach register [dict get $specdata registers] {
+    set access_type [dict get $register access_type]
+    if {$access_type == "ro"} {
+        set io_direction in
+    } else {
+        set io_direction out
+    }
     foreach bitfield [dict get $register bitfields] {
         set bitfield_domain [dict get $bitfield clock_domain]
         set ports_by_direction [dict get $ports_by_domain_and_direction $bitfield_domain]
         
         set bitfield_width [expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit] + 1]
-        set access_type [dict get $bitfield access_type]
-        if {[dict get $bitfield access_type] == "ro"} {
-            set io_direction in
-        } else {
-            set io_direction out
-        }
         
         set cdc_group [dict get $ports_by_direction $io_direction]
         set ports [dict get $cdc_group ports]
 
         dict set bitfield width $bitfield_width
         dict set bitfield io_direction $io_direction
+        dict set bitfield access_type $access_type
         lappend ports $bitfield
 
         dict set cdc_group num_bits [expr [dict get $cdc_group num_bits] + $bitfield_width]

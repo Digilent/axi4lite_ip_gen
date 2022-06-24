@@ -18,7 +18,7 @@ port (
 
 % foreach register [dict get $specdata registers] {
 %   foreach bitfield [dict get $register bitfields] {
-%     if {[dict get $bitfield access_type] == "ro"} {
+%     if {[dict get $register access_type] == "ro"} {
 %       set io_direction IN
 %       set prefix [get_prefix $specdata [dict get $bitfield clock_domain]]
 %     } else {
@@ -68,7 +68,7 @@ port (
 
 % foreach register [dict get $specdata registers] {
 %   foreach bitfield [dict get $register bitfields] {
-%     if {[dict get $bitfield access_type] == "ro"} {
+%     if {[dict get $register access_type] == "ro"} {
 %       set io_direction IN
 %     } else {
 %       set io_direction OUT

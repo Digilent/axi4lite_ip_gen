@@ -23,20 +23,37 @@
         {
             "comment": ["all registers should be placed in ascending order of address in the register file and",
                         "start with base address [axi4lite_interface][reserved_addresses] * sizeof(u32)"],
-            "name": "control",
+            "name": "Control",
+            "access_type": "rw",
             "bitfields": [
                 {
                     "name": "Start",
                     "high_bit": 0,
                     "low_bit": 0,
-                    "access_type": "rw",
                     "clock_domain": "reg_clk"
                 },
                 {
-                    "name": "Idle",
-                    "high_bit": 1,
+                    "name": "Count",
+                    "high_bit": 4,
                     "low_bit": 1,
-                    "access_type": "ro",
+                    "clock_domain": "reg_clk"
+                }
+            ]
+        },
+        {
+            "name": "Status",
+            "access_type": "ro",
+            "bitfields": [
+                {
+                    "name": "Idle",
+                    "high_bit": 0,
+                    "low_bit": 0,
+                    "clock_domain": "reg_clk"
+                },
+                {
+                    "name": "DetectedCount",
+                    "high_bit": 4,
+                    "low_bit": 1,
                     "clock_domain": "reg_clk"
                 }
             ]
