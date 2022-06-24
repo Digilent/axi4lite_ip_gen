@@ -270,7 +270,7 @@ ${prefix}[dict get $signal name] <= ${prefix}[dict get $signal name]Int;
 %     set oprefix [get_prefix $specdata $outclk]
 
 -- Handshake CDC from ${inclk} to ${outclk}
-${inclk}_to_${outclk}_cdc: HandshakeData 
+${inclk}_to_${outclk}_InstHandshake: HandshakeData 
 generic map (
     kDataWidth => [dict get $cdc_group num_bits]
 )
