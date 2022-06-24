@@ -19,3 +19,11 @@ proc substify {in {var OUT}} {
     set s [string range $in $pos end]
     append script "append $var \[" [list subst $s] "]\n"
 }
+
+proc range2mask {high low} {
+    set mask 0
+    for {set i $low} {$i <= $high} {incr i} {
+        set mask [expr $mask | (1 << $i)]
+    }
+    return $mask
+}

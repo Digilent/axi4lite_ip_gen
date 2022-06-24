@@ -1,6 +1,7 @@
 {
     "vendor": "digilent.com",
-    "ip_name": "Example",
+    "ip_name": "ExampleIp",
+    "underscore_name": "EXAMPLE_IP",
     "version": "1.0",
     "axi4lite_interface": {
         "name": "S_AXI",
