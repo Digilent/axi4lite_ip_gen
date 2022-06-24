@@ -1,2 +1,3 @@
 # ignore proj folder where the IP Packager projects are created when editing IPs
 proj
+out
