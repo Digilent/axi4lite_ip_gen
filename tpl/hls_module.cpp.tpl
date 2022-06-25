@@ -8,16 +8,18 @@ void [dict get $specdata ip_name] (
 % }
     // IP ports
 
-% foreach register [dict get $specdata registers] {
+% set registers [dict get $specdata registers]
+% for {set register_index 0} {$register_index < [llength $registers]} {incr register_index} {
+% set register [lindex $registers $register_index]
 %   set bitfields [dict get $register bitfields]
-%   for {set i 0} {$i < [llength $bitfields]} {incr i} {
-%     set bitfield [lindex $bitfields $i]
+%   for {set bitfield_index 0} {$bitfield_index < [llength $bitfields]} {incr bitfield_index} {
+%     set bitfield [lindex $bitfields $bitfield_index]
 %     if {[dict get $bitfield io_direction] == "out"} {
 %       set by_reference "&"
 %     } else {
 %       set by_reference ""
 %     }
-%     if {[expr $i + 1] >= [llength $bitfields]} {
+%     if {[expr $bitfield_index + 1] >= [llength $bitfields] && [expr $register_index + 1] >= [llength $registers]} {
 %       set last ""
 %     } else {
 %       set last ","
