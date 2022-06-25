@@ -1,9 +1,11 @@
+# calling context must set the following:
+# set outfile_path ${script_dir}/intermediates/hls_module.cpp
+# set specfile_path ${script_dir}/tpl/example.json
+
 set script_dir [file dirname [file normalize [info script]]]
 source ${script_dir}/util.tcl
 
-set outfile_path ${script_dir}/out/hls_module.cpp
 set tplfile_path ${script_dir}/tpl/hls_module.cpp.tpl
-set specfile_path ${script_dir}/tpl/example.json
 
 #script has no calling context, so set up data for testing
 package require json

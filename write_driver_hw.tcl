@@ -1,7 +1,7 @@
 set script_dir [file dirname [file normalize [info script]]]
 source ${script_dir}/util.tcl
 
-set outfile_path ${script_dir}/out/driver_hw.h
+set outfile_path ${script_dir}/intermediates/driver_hw.h
 set tplfile_path ${script_dir}/tpl/driver_hw.h.tpl
 set specfile_path ${script_dir}/tpl/example.json
 

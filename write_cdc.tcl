@@ -1,7 +1,7 @@
 set script_dir [file dirname [file normalize [info script]]]
 source ${script_dir}/util.tcl
 
-set outfile_path ${script_dir}/out/cdc.vhd
+set outfile_path ${script_dir}/intermediates/cdc.vhd
 set tplfile_path ${script_dir}/tpl/cdc.vhd.tpl
 set specfile_path ${script_dir}/tpl/example.json
 
