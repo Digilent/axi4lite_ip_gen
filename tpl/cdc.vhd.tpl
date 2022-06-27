@@ -1,7 +1,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
-entity $module_name is
+entity ${module_name}_top is
 generic (
 
 % set interface [dict get $specdata axi4lite_interface]
@@ -153,9 +153,9 @@ signal [get_prefix $specdata [dict get ${clock_domain} name]]Rst : STD_LOGIC;
 %       set domain_prefix [get_prefix $specdata [dict get $signal clock_domain]]
 %       set signal_name [dict get $signal name]
 %       if {[dict get $signal width] != 1} {
-%         set signal_type {STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0)}
+%         set signal_type "STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0)"
 %       } else {
-%         set signal_type {STD_LOGIC}
+%         set signal_type "STD_LOGIC"
 %       }
 signal ${interface_prefix}${signal_name} : ${signal_type};
 
@@ -181,10 +181,10 @@ ${hls_module}_inst: ${hls_module} port map(
 %   foreach bitfield [dict get $register bitfields] {
 %     set bitfield_name [dict get $bitfield name]
 %     if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
-    ${bitfield_name}(0) => ${prefix}${bitfield_name},
+    ${bitfield_name}([dict get $bitfield high_bit] downto [dict get $bitfield low_bit]) => ${prefix}${bitfield_name},
 
 %     } else {
-    ${bitfield_name} => ${prefix}${bitfield_name},
+    ${bitfield_name}([dict get $bitfield high_bit]) => ${prefix}${bitfield_name},
 
 %     }
 %   }
@@ -235,16 +235,12 @@ port map (
 
 --- Map external output ports to internal signals
 
-% foreach {from_domain to_domains} $cdc_signals {
-%   foreach {to_domain signals} $to_domains {
-%     foreach signal $signals {
-%       set prefix [get_prefix $specdata [dict get $signal clock_domain]]
-%       if {[dict get $signal io_direction] == "out"} {
+% foreach {domain domain_ports} $ports_by_domain_and_direction {
+%   set cdc_group [dict get $domain_ports "out"]
+%   foreach port [dict get $cdc_group ports] {
+%     set prefix [get_prefix $specdata [dict get $signal clock_domain]]
+${prefix}[dict get $port name] <= ${prefix}[dict get $port name]Int;
 
-${prefix}[dict get $signal name] <= ${prefix}[dict get $signal name]Int;
-
-%       }
-%     }
 %   }
 % }
 
