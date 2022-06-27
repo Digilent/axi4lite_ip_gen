@@ -6,7 +6,7 @@
 #include "xil_types.h"
 #include "xil_io.h"
 
-% set prefix [get dict $specdata underscore_name]
+% set prefix [dict get $specdata underscore_name]
 
 /* Register offsets */
 #define ${prefix}_CONTROL_REG_OFFSET 						    0x00
