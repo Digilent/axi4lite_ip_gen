@@ -1,9 +1,8 @@
+# calling context must set this:
+# set specfile_path ${script_dir}/examples/ExampleIp.json
+
 set script_dir [file dirname [file normalize [info script]]]
 source ${script_dir}/util.tcl
-
-set outfile_path ${script_dir}/intermediates/cdc.vhd
-set tplfile_path ${script_dir}/tpl/cdc.vhd.tpl
-set specfile_path ${script_dir}/tpl/example.json
 
 #script has no calling context, so set up data for testing
 package require json
@@ -15,6 +14,10 @@ set specfile [open $specfile_path r]
 set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
+
+
+set outfile_path ${script_dir}/intermediates/[dict get $specdata ip_name]_top.vhd
+set tplfile_path ${script_dir}/tpl/cdc.vhd.tpl
 
 set interface [dict get $specdata axi4lite_interface]
 set num_regs [expr [llength [dict get $specdata registers]] + [dict get $interface reserved_addresses]]

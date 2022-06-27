@@ -1,9 +1,11 @@
+# calling context must set this:
+# set specfile_path ${script_dir}/examples/ExampleIp.json
+
 set script_dir [file dirname [file normalize [info script]]]
 source ${script_dir}/util.tcl
 
 set outfile_path ${script_dir}/intermediates/driver_hw.h
 set tplfile_path ${script_dir}/tpl/driver_hw.h.tpl
-set specfile_path ${script_dir}/tpl/example.json
 
 #script has no calling context, so set up data for testing
 package require json

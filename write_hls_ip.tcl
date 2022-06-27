@@ -1,7 +1,13 @@
 #! vitis_hls
-set script_dir [file dirname [file normalize [info script]]]
+# vitis_hls -f write_hls_ip.tcl specfile_path
+# set specfile_path ${script_dir}/tpl/ExampleIp.json
+puts $argv
 
-set specfile_path ${script_dir}/tpl/example.json
+set specfile_path [lindex $argv 2]
+# arguments passed to vitis_hls include all flags and the script name for some reason
+# https://support.xilinx.com/s/question/0D52E00006hpQL4SAM/passing-tcl-arguments-to-vitishls?language=en_US
+
+set script_dir [file dirname [file normalize [info script]]]
 
 #script has no calling context, so set up data for testing
 package require json
@@ -13,6 +19,8 @@ set specfile [open $specfile_path r]
 set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
+
+puts $specdata
 
 set outfile_path ${script_dir}/intermediates/[dict get $specdata ip_name].cpp
 
@@ -65,3 +73,4 @@ export_design -rtl verilog -format ip_catalog -version $VERSION -description $DE
 # -----------------------------------------------------------------------------
 # vitis_hls -p $PROJ_NAME
 
+exit
