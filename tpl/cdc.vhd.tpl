@@ -26,7 +26,7 @@ port (
 %       set prefix [get_prefix $specdata [dict get $bitfield clock_domain]]
 %     }
 %     if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
-    ${prefix}[dict get $bitfield name] : $io_direction STD_LOGIC_VECTOR ([dict get $bitfield high_bit] downto [dict get $bitfield low_bit]);
+    ${prefix}[dict get $bitfield name] : $io_direction STD_LOGIC_VECTOR ([expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit]] downto 0);
 
 %     } else {
     ${prefix}[dict get $bitfield name] : $io_direction STD_LOGIC;
@@ -54,7 +54,7 @@ port (
     );
 end;
 
-architecture Behavioral of $module_name is
+architecture Behavioral of ${module_name}_top is
 component $hls_module is
 generic (
 
@@ -183,8 +183,11 @@ ${hls_module}_inst: ${hls_module} port map(
 %     if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
     ${bitfield_name}([dict get $bitfield high_bit] downto [dict get $bitfield low_bit]) => ${prefix}${bitfield_name},
 
-%     } else {
+%     } elseif {[llength [dict get $register bitfields]] > 1} {
     ${bitfield_name}([dict get $bitfield high_bit]) => ${prefix}${bitfield_name},
+
+%     } else {
+    ${bitfield_name} => ${prefix}${bitfield_name},
 
 %     }
 %   }
