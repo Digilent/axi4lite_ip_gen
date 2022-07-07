@@ -9,7 +9,7 @@ set repo [lindex $argv 1]
 package require json
 
 set script_dir [file dirname [file normalize [info script]]]
-source [file join $script_dir util.tcl]
+source $script_dir/util.tcl
 
 # Read the JSON input file
 set templates_dir [file join ${script_dir} "tpl"]
@@ -55,7 +55,8 @@ update_ip_catalog -rebuild
 
 # Open a temporary IPX project in the repo directory
 set directory $script_dir/ipx_proj
-ipx::edit_ip_in_project -upgrade true -name edit_${name}_v1_0 -directory ${directory} ${repo}/${name}_${version}/component.xml
+set ipx_proj edit_${name}_v1_0
+ipx::edit_ip_in_project -upgrade true -name $ipx_proj -directory ${directory} ${repo}/${name}_${version}/component.xml
 update_compile_order -fileset sources_1
 
 # Do some Identification stuff (most is already done)
@@ -82,27 +83,67 @@ source [file join $script_dir write_driver_hw.tcl]
 # Wipe out existing HDL files and import generated ones
 remove_files [get_files -filter name=~${ip_path}/hdl/*]
 
-proc import_hdl_file {filepath} {
+# Switch file groups to be language-agnostic
+ipx::remove_file_group xilinx_verilogsynthesis [ipx::current_core]
+ipx::remove_file_group xilinx_verilogbehavioralsimulation [ipx::current_core]
+ipx::add_file_group -type synthesis {} [ipx::current_core]
+ipx::add_file_group -type simulation {} [ipx::current_core]
+set synthesis_group xilinx_anylanguagesynthesis
+set sim_group xilinx_anylanguagebehavioralsimulation
+set_property model_name ${ip_name}_top [ipx::get_file_groups $synthesis_group]
+set_property model_name ${ip_name}_top [ipx::get_file_groups $sim_group]
+
+proc import_hdl_file {filepath to_group} {
     global ip_path
     set filename [file tail $filepath]
     add_files -norecurse -copy_to ${ip_path}/hdl ${filepath}
-    ipx::add_file ${ip_path}/hdl/${filename} [ipx::get_file_groups xilinx_verilogsynthesis -of_objects [ipx::current_core]]
-    set_property type vhdlSource [ipx::get_files hdl/${filename} -of_objects [ipx::get_file_groups xilinx_verilogsynthesis -of_objects [ipx::current_core]]]
-    set_property library_name xil_defaultlib [ipx::get_files hdl/${filename} -of_objects [ipx::get_file_groups xilinx_verilogsynthesis -of_objects [ipx::current_core]]]
+    ipx::add_file ${ip_path}/hdl/${filename} [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
+    set_property type vhdlSource [ipx::get_files hdl/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
+    set_property library_name xil_defaultlib [ipx::get_files hdl/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
 }
 
-foreach filepath [glob ${script_dir}/src/*] {
-    import_hdl_file $filepath
-}
-import_hdl_file ${script_dir}/intermediates/${ip_name}.vhd
-import_hdl_file ${script_dir}/intermediates/${ip_name}_top.vhd
+import_hdl_file ${script_dir}/intermediates/${ip_name}_top.vhd $synthesis_group
 set_property top ${ip_name}_top [current_fileset]
-ipx::merge_project_changes files [ipx::current_core]
+
+import_hdl_file ${script_dir}/intermediates/${ip_name}.vhd $synthesis_group
+foreach filepath [glob ${script_dir}/src/*.vhd] {
+    import_hdl_file $filepath $synthesis_group
+}
 
 # Add Customization Parameters
 
-# Add Ports and Interfaces
+# Adjust Ports and Interfaces
+# attach the reset
+ipx::add_port_map RST [ipx::get_bus_interfaces S_AXI_RST -of_objects [ipx::current_core]]
+set_property physical_name [dict get $interface reset] [ipx::get_port_maps RST -of_objects [ipx::get_bus_interfaces S_AXI_RST -of_objects [ipx::current_core]]]
+set_property name S_AXI_RSTN [ipx::get_bus_interfaces S_AXI_RST -of_objects [ipx::current_core]]
+
+ipx::merge_project_changes ports [ipx::current_core]
+
+foreach register [dict get $specdata registers] {
+	foreach bitfield [dict get $register bitfields] {
+		set prefix [get_prefix $specdata [dict get $bitfield clock_domain]]
+		set_property driver_value 0 [ipx::get_ports ${prefix}[dict get $bitfield name] -of_objects [ipx::current_core]]
+	}
+}
 
 # Define Addressing and Memory
 
 # Package the IP and close the project
+ipx::merge_project_changes ports [ipx::current_core]
+ipx::merge_project_changes files [ipx::current_core]
+ipx::merge_project_changes hdl_parameters [ipx::current_core]
+ipx::update_checksums [ipx::current_core]
+ipx::save_core [ipx::current_core]
+
+set_property core_revision 2 [ipx::current_core]
+ipx::update_source_project_archive -component [ipx::current_core]
+ipx::create_xgui_files [ipx::current_core]
+ipx::update_checksums [ipx::current_core]
+ipx::save_core [ipx::current_core]
+ipx::move_temp_component_back -component [ipx::current_core]
+puts "Packaged ip [ipx::current_core]"
+
+close_project; # -delete isn't used. -force in create_project overrides the need for it, and the project is preserved for debugging purposes
+update_ip_catalog -rebuild -repo_path $repo
+
