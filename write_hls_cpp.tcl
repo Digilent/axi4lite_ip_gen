@@ -9,8 +9,6 @@ set tplfile_path ${script_dir}/tpl/hls_module.cpp.tpl
 #script has no calling context, so set up data for testing
 package require json
 
-source [file join $script_dir util.tcl]
-
 # load json data
 set specfile [open $specfile_path r]
 set specdata_json [read $specfile]

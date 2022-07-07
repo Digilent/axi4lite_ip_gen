@@ -27,3 +27,12 @@ proc range2mask {high low} {
     }
     return $mask
 }
+
+proc get_prefix {specdata clock_name} {
+    foreach clock [dict get $specdata clocks] {
+        if {[dict get $clock name] == $clock_name} {
+            return [dict get $clock prefix]
+        }
+    }
+    return ""
+}

@@ -26,15 +26,6 @@ set addr_width [clog2 $num_regs]
 set module_name [file rootname [file tail $specfile_path]]
 set hls_module [dict get $specdata ip_name]
 
-proc get_prefix {specdata clock_name} {
-    foreach clock [dict get $specdata clocks] {
-        if {[dict get $clock name] == $clock_name} {
-            return [dict get $clock prefix]
-        }
-    }
-    return ""
-}
-
 # Set up nested dicts ordered such that the template can easily iterate through ports while instantiating CDC modules
 #   ports_by_domain_and_direction is indexed first by the name of the non-AXI clock that the CDC is connected to,
 #   then by the direction (in or out) of the CDC with respect to the AXI interface, then a final dict is provided with
