@@ -113,7 +113,7 @@ foreach filepath [glob ${script_dir}/src/*.vhd] {
 # Add Customization Parameters
 
 # Adjust Ports and Interfaces
-# attach the reset
+## attach the reset
 set reset_interface [dict get $interface name]_RST
 ipx::add_port_map RST [ipx::get_bus_interfaces ${reset_interface} -of_objects [ipx::current_core]]
 set_property physical_name [dict get $interface reset] [ipx::get_port_maps RST -of_objects [ipx::get_bus_interfaces ${reset_interface} -of_objects [ipx::current_core]]]
@@ -127,6 +127,39 @@ foreach register [dict get $specdata registers] {
 		set_property driver_value 0 [ipx::get_ports ${prefix}[dict get $bitfield name] -of_objects [ipx::current_core]]
 	}
 }
+
+## add clock parameters and associate them with interfaces and resets as necessary
+set_property ipi_drc {ignore_freq_hz true} [ipx::current_core]
+
+set target_freq_hz [expr "1000000000 / [dict get $specdata target_clk_period]"]
+foreach clock [dict get $specdata clocks] {
+    set clock_name [dict get $clock name]
+    puts "Configuring clock $clock_name"
+
+    set clk_obj [ipx::get_bus_interfaces $clock_name -of_objects [ipx::current_core]]
+    if {$clk_obj == ""} {
+        # the clock is missing, create it
+        ipx::add_bus_interface $clock_name [ipx::current_core]
+        set clk_obj [ipx::get_bus_interfaces $clock_name -of_objects [ipx::current_core]]
+        set_property abstraction_type_vlnv xilinx.com:signal:clock_rtl:1.0 $clk_obj
+        set_property bus_type_vlnv xilinx.com:signal:clock:1.0 $clk_obj
+        set_property display_name $clock_name $clk_obj
+        ipx::add_bus_parameter FREQ_HZ $clk_obj
+        ipx::add_port_map CLK $clk_obj
+        set_property physical_name $clock_name [ipx::get_port_maps CLK -of_objects $clk_obj]
+    }
+
+    ipx::add_bus_parameter FREQ_HZ $clk_obj
+    set_property value $target_freq_hz [ipx::get_bus_parameters FREQ_HZ -of_objects $clk_obj]
+}
+
+set axi_intf_name [dict get [dict get $specdata axi4lite_interface] name]
+set axi_clk [dict get [dict get $specdata axi4lite_interface] clock_domain]
+set axi_rst [dict get [dict get $specdata axi4lite_interface] reset]
+set_property value $axi_rst [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces $axi_clk -of_objects [ipx::current_core]]]
+ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces $axi_clk -of_objects [ipx::current_core]]
+set_property value $axi_intf_name [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces $axi_clk -of_objects [ipx::current_core]]]
+# FIXME: do the other ports need to be associated with their clocks?
 
 # Define Addressing and Memory
 
