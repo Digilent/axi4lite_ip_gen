@@ -36,3 +36,19 @@ proc get_prefix {specdata clock_name} {
     }
     return ""
 }
+
+# Workaround for the following warning.
+# WARNING: [SYN 201-107] Renaming port name 'ExampleIp/Start' to 'ExampleIp/Start_r' to avoid the conflict with HDL keywords or other object names.
+# Hardcodes a list of reserved port names and rules to rewrite them. Some initial testing shows that 
+proc get_hls_portname {bitfield_name} {
+    set reserved_names [list]
+    lappend reserved_names "start"
+    lappend reserved_names "begin"
+    lappend reserved_names "end"
+    set idx [lsearch $reserved_names [string tolower $bitfield_name]]
+    if {$idx != -1} {
+        # preserve original caps
+        set bitfield_name "${bitfield_name}_r"
+    }
+    return $bitfield_name
+}

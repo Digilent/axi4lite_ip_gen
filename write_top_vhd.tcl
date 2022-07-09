@@ -79,6 +79,7 @@ foreach register [dict get $specdata registers] {
         set cdc_group [dict get $ports_by_direction $io_direction]
         set ports [dict get $cdc_group ports]
 
+        dict set bitfield internal_name [get_hls_portname [dict get $bitfield name]]; # rewrite internal signal names to ensure that reserved keywords aren't used
         dict set bitfield width $bitfield_width
         dict set bitfield io_direction $io_direction
         dict set bitfield access_type $access_type

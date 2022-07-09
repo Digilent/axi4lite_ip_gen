@@ -25,11 +25,12 @@ port (
 %       set io_direction OUT
 %       set prefix [get_prefix $specdata [dict get $bitfield clock_domain]]
 %     }
+%     set bitfield_name ${prefix}[dict get $bitfield name]
 %     if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
-    ${prefix}[dict get $bitfield name] : $io_direction STD_LOGIC_VECTOR ([expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit]] downto 0);
+    ${bitfield_name} : $io_direction STD_LOGIC_VECTOR ([expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit]] downto 0);
 
 %     } else {
-    ${prefix}[dict get $bitfield name] : $io_direction STD_LOGIC;
+    ${bitfield_name} : $io_direction STD_LOGIC;
 
 %     }
 %   }
@@ -66,20 +67,19 @@ port (
     ap_clk : IN STD_LOGIC;
     ap_rst_n : IN STD_LOGIC;
 
-% foreach register [dict get $specdata registers] {
-%   foreach bitfield [dict get $register bitfields] {
-%     if {[dict get $register access_type] == "ro"} {
-%       set io_direction IN
-%     } else {
-%       set io_direction OUT
-%     }
-%     set prefix [get_prefix $specdata [dict get $interface clock_domain]]
-%     if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
-    [dict get $bitfield name] : $io_direction STD_LOGIC_VECTOR ([dict get $bitfield high_bit] downto [dict get $bitfield low_bit]);
+% foreach {domain domain_ports} $ports_by_domain_and_direction {
+%   foreach {direction cdc_group} $domain_ports {
+%     foreach bitfield [dict get $cdc_group ports] {
+%       set io_direction [string toupper [dict get $bitfield io_direction]]
+%       set prefix [get_prefix $specdata [dict get $interface clock_domain]]
+%       set internal_name [dict get $bitfield internal_name]
+%       if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
+    ${internal_name} : $io_direction STD_LOGIC_VECTOR ([dict get $bitfield high_bit] downto [dict get $bitfield low_bit]);
 
-%     } else {
-    [dict get $bitfield name] : $io_direction STD_LOGIC;
+%       } else {
+    ${internal_name} : $io_direction STD_LOGIC;
 
+%       }
 %     }
 %   }
 % }
@@ -177,39 +177,42 @@ ${hls_module}_inst: ${hls_module} port map(
     ap_rst_n => [dict get $interface reset],
 
 % set prefix [get_prefix $specdata [dict get $interface clock_domain]]
-% foreach register [dict get $specdata registers] {
-%   foreach bitfield [dict get $register bitfields] {
-%     set bitfield_name [dict get $bitfield name]
-%     if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
-    ${bitfield_name}([dict get $bitfield high_bit] downto [dict get $bitfield low_bit]) => ${prefix}${bitfield_name},
+% foreach {domain domain_ports} $ports_by_domain_and_direction {
+%   foreach {direction cdc_group} $domain_ports {
+%     foreach bitfield [dict get $cdc_group ports] {
+%       set bitfield_name ${prefix}[dict get $bitfield name]
+%       set internal_name [dict get $bitfield internal_name]
+%       if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
+    ${internal_name}([dict get $bitfield high_bit] downto [dict get $bitfield low_bit]) => ${bitfield_name},
 
-%     } elseif {[llength [dict get $register bitfields]] > 1} {
-    ${bitfield_name}([dict get $bitfield high_bit]) => ${prefix}${bitfield_name},
+%       } elseif {[llength [dict get $register bitfields]] > 1} {
+    ${internal_name}([dict get $bitfield high_bit]) => ${bitfield_name},
 
-%     } else {
-    ${bitfield_name} => ${prefix}${bitfield_name},
+%       } else {
+    ${internal_name} => ${bitfield_name},
 
+%       }
 %     }
 %   }
 % }
-
-    [dict get $interface name]_AWVALID => [dict get $interface name]_AWVALID,
-    [dict get $interface name]_AWREADY => [dict get $interface name]_AWREADY,
-    [dict get $interface name]_AWADDR => [dict get $interface name]_AWADDR,
-    [dict get $interface name]_WVALID => [dict get $interface name]_WVALID,
-    [dict get $interface name]_WREADY => [dict get $interface name]_WREADY,
-    [dict get $interface name]_WDATA => [dict get $interface name]_WDATA,
-    [dict get $interface name]_WSTRB => [dict get $interface name]_WSTRB,
-    [dict get $interface name]_ARVALID => [dict get $interface name]_ARVALID,
-    [dict get $interface name]_ARREADY => [dict get $interface name]_ARREADY,
-    [dict get $interface name]_ARADDR => [dict get $interface name]_ARADDR,
-    [dict get $interface name]_RVALID => [dict get $interface name]_RVALID,
-    [dict get $interface name]_RREADY => [dict get $interface name]_RREADY,
-    [dict get $interface name]_RDATA => [dict get $interface name]_RDATA,
-    [dict get $interface name]_RRESP => [dict get $interface name]_RRESP,
-    [dict get $interface name]_BVALID => [dict get $interface name]_BVALID,
-    [dict get $interface name]_BREADY => [dict get $interface name]_BREADY,
-    [dict get $interface name]_BRESP => [dict get $interface name]_BRESP,
+% set interface_name [string tolower [dict get $interface name]]
+    ${interface_name}_AWVALID => [dict get $interface name]_AWVALID,
+    ${interface_name}_AWREADY => [dict get $interface name]_AWREADY,
+    ${interface_name}_AWADDR => [dict get $interface name]_AWADDR,
+    ${interface_name}_WVALID => [dict get $interface name]_WVALID,
+    ${interface_name}_WREADY => [dict get $interface name]_WREADY,
+    ${interface_name}_WDATA => [dict get $interface name]_WDATA,
+    ${interface_name}_WSTRB => [dict get $interface name]_WSTRB,
+    ${interface_name}_ARVALID => [dict get $interface name]_ARVALID,
+    ${interface_name}_ARREADY => [dict get $interface name]_ARREADY,
+    ${interface_name}_ARADDR => [dict get $interface name]_ARADDR,
+    ${interface_name}_RVALID => [dict get $interface name]_RVALID,
+    ${interface_name}_RREADY => [dict get $interface name]_RREADY,
+    ${interface_name}_RDATA => [dict get $interface name]_RDATA,
+    ${interface_name}_RRESP => [dict get $interface name]_RRESP,
+    ${interface_name}_BVALID => [dict get $interface name]_BVALID,
+    ${interface_name}_BREADY => [dict get $interface name]_BREADY,
+    ${interface_name}_BRESP => [dict get $interface name]_BRESP,
     interrupt => ${prefix}Interrupt
 );
 
