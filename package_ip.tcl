@@ -114,9 +114,10 @@ foreach filepath [glob ${script_dir}/src/*.vhd] {
 
 # Adjust Ports and Interfaces
 # attach the reset
-ipx::add_port_map RST [ipx::get_bus_interfaces S_AXI_RST -of_objects [ipx::current_core]]
-set_property physical_name [dict get $interface reset] [ipx::get_port_maps RST -of_objects [ipx::get_bus_interfaces S_AXI_RST -of_objects [ipx::current_core]]]
-set_property name S_AXI_RSTN [ipx::get_bus_interfaces S_AXI_RST -of_objects [ipx::current_core]]
+set reset_interface [dict get $interface name]_RST
+ipx::add_port_map RST [ipx::get_bus_interfaces ${reset_interface} -of_objects [ipx::current_core]]
+set_property physical_name [dict get $interface reset] [ipx::get_port_maps RST -of_objects [ipx::get_bus_interfaces ${reset_interface} -of_objects [ipx::current_core]]]
+set_property name ${reset_interface}N [ipx::get_bus_interfaces ${reset_interface} -of_objects [ipx::current_core]]
 
 ipx::merge_project_changes ports [ipx::current_core]
 
