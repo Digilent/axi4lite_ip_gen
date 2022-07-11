@@ -33,10 +33,11 @@ void [dict get $specdata ip_name] (
     // AXI4-Lite registers
 
 % foreach register [dict get $specdata registers] {
-    #pragma HLS INTERFACE s_axilite port=[dict get $register name]Axil
+%   set port [dict get $register name]
+    #pragma HLS INTERFACE s_axilite port=${port}Axil
 
 %   if {[dict get $register io_direction] == "in"} {
-    #pragma HLS INTERFACE ap_none port=[dict get $register name]Axil
+    #pragma HLS INTERFACE ap_none port=${port}Axil
 
 %   }
 % }

@@ -27,13 +27,8 @@ port (
 %       set prefix [get_prefix $specdata [dict get $bitfield clock_domain]]
 %     }
 %     set bitfield_name ${prefix}[dict get $bitfield name]
-%     if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
     ${bitfield_name} : $io_direction STD_LOGIC_VECTOR ([expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit]] downto 0);
 
-%     } else {
-    ${bitfield_name} : $io_direction STD_LOGIC;
-
-%     }
 %   }
 % }
     [dict get $interface name]_AWVALID : IN STD_LOGIC;
@@ -75,13 +70,8 @@ port (
 %       set io_direction [string toupper [dict get $bitfield io_direction]]
 %       set prefix [get_prefix $specdata [dict get $interface clock_domain]]
 %       set internal_name [dict get $bitfield internal_name]
-%       if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
-    ${internal_name} : $io_direction STD_LOGIC_VECTOR ([dict get $bitfield high_bit] downto [dict get $bitfield low_bit]);
+    ${internal_name} : $io_direction STD_LOGIC_VECTOR ([expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit]] downto 0);
 
-%       } else {
-    ${internal_name} : $io_direction STD_LOGIC;
-
-%       }
 %     }
 %   }
 % }
@@ -154,11 +144,7 @@ signal [get_prefix $specdata [dict get ${clock_domain} name]]Rst : STD_LOGIC;
 %     foreach signal [dict get $cdc_group ports] {
 %       set domain_prefix [get_prefix $specdata [dict get $signal clock_domain]]
 %       set signal_name [dict get $signal name]
-%       if {[dict get $signal width] != 1} {
-%         set signal_type "STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0)"
-%       } else {
-%         set signal_type "STD_LOGIC"
-%       }
+%       set signal_type "STD_LOGIC_VECTOR ([expr [dict get $signal width] - 1] downto 0)"
 signal ${interface_prefix}${signal_name} : ${signal_type};
 
 %       if {$direction == "out"} {
@@ -184,16 +170,8 @@ ${hls_module}_inst: ${hls_module} port map(
 %     foreach bitfield [dict get $cdc_group ports] {
 %       set bitfield_name ${prefix}[dict get $bitfield name]
 %       set internal_name [dict get $bitfield internal_name]
-%       if {[dict get $bitfield high_bit] != [dict get $bitfield low_bit]} {
-    ${internal_name}([dict get $bitfield high_bit] downto [dict get $bitfield low_bit]) => ${bitfield_name},
-
-%       } elseif {[llength [dict get $register bitfields]] > 1} {
-    ${internal_name}([dict get $bitfield high_bit]) => ${bitfield_name},
-
-%       } else {
     ${internal_name} => ${bitfield_name},
 
-%       }
 %     }
 %   }
 % }
@@ -223,7 +201,6 @@ ${hls_module}_inst: ${hls_module} port map(
 % foreach clock_domain [dict get $specdata clocks] {
 %   set clock [dict get $clock_domain name] 
 %   if {$clock == [dict get ${interface} clock_domain]} {
-
 [get_prefix $specdata ${clock}]Rst_n <= [dict get ${interface} reset];
 
 %   } else {
@@ -246,7 +223,7 @@ port map (
 % foreach {domain domain_ports} $ports_by_domain_and_direction {
 %   set cdc_group [dict get $domain_ports "out"]
 %   foreach port [dict get $cdc_group ports] {
-%     set prefix [get_prefix $specdata [dict get $signal clock_domain]]
+%     set prefix [get_prefix $specdata [dict get $port clock_domain]]
 ${prefix}[dict get $port name] <= ${prefix}[dict get $port name]Int;
 
 %   }
@@ -272,30 +249,18 @@ ${prefix}[dict get $port name] <= ${prefix}[dict get $port name]Int;
 %     }
 %     set iprefix [get_prefix $specdata $inclk]
 %     set oprefix [get_prefix $specdata $outclk]
-
--- Handshake CDC from ${inclk} to ${outclk}
-${inclk}_to_${outclk}_InstHandshake: HandshakeData 
+%     foreach port [dict get $cdc_group ports] {
+%       set port_name [dict get $port name]
+-- Handshake CDC for ${port_name} from ${inclk} to ${outclk}
+${port_name}_from_${inclk}_to_${outclk}_InstHandshake: HandshakeData 
 generic map (
-    kDataWidth => [dict get $cdc_group num_bits]
+    kDataWidth => [dict get $port width]
 )
 port map(
     InClk => ${inclk},
     OutClk => ${outclk},
-
-%     foreach port [dict get $cdc_group ports] {
-%       set width [dict get $port width]
-%       if {$width > 1} {
-    iData([expr $low_index + $width - 1] downto $low_index) => ${iprefix}[dict get $port name],
-    oData([expr $low_index + $width - 1] downto $low_index) => ${oprefix}[dict get $port name]${opostfix},
-
-%       } else {
-    iData($low_index) => ${iprefix}[dict get $port name],
-    oData($low_index) => ${oprefix}[dict get $port name]${opostfix},
-
-%       }
-%       set low_index [expr $low_index + $width]
-%     }
-% 
+    iData => ${iprefix}${port_name},
+    oData => ${oprefix}${port_name}${opostfix},
     iPush => ${pushsignal},
     iRdy => open, -- unused? no point in applying backpressure to the hls core, axi lite transactions should be infrequent enough
     oAck => '1', -- tie high, don't apply any backpressure to this
@@ -304,6 +269,7 @@ port map(
     aoReset => ${oprefix}Rst
 );
 
+%     }
 %   }
 % }
 
