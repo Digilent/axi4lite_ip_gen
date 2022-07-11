@@ -4,6 +4,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity ${module_name}_top is
 generic (
 
+% set addr_width [get_axi4lite_interface_addr_width $specdata]
 % set interface [dict get $specdata axi4lite_interface]
     C_[string toupper [dict get $interface name]]_ADDR_WIDTH : INTEGER := ${addr_width};
     C_[string toupper [dict get $interface name]]_DATA_WIDTH : INTEGER := 32
@@ -59,6 +60,7 @@ architecture Behavioral of ${module_name}_top is
 component $hls_module is
 generic (
 
+% set addr_width [get_axi4lite_interface_addr_width $specdata]
 % set interface [dict get $specdata axi4lite_interface]
     C_[string toupper [dict get $interface name]]_ADDR_WIDTH : INTEGER := ${addr_width};
     C_[string toupper [dict get $interface name]]_DATA_WIDTH : INTEGER := 32

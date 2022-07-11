@@ -52,3 +52,69 @@ proc get_hls_portname {bitfield_name} {
     }
     return $bitfield_name
 }
+
+proc get_register_addresses {specdata} {
+    set address_info [list]
+
+    set newreg [dict create]
+    dict set newreg name ap_ctrl
+    dict set newreg width 0x4
+    dict set newreg offset 0x0
+    lappend address_info $newreg
+
+    set newreg [dict create]
+    dict set newreg name global_interrupt_enable
+    dict set newreg width 0x4
+    dict set newreg offset 0x4
+    lappend address_info $newreg
+
+    set newreg [dict create]
+    dict set newreg name ip_interrupt_enable
+    dict set newreg width 0x4
+    dict set newreg offset 0x8
+    lappend address_info $newreg
+
+    set newreg [dict create]
+    dict set newreg name ip_interrupt_status
+    dict set newreg width 0x4
+    dict set newreg offset 0xc
+    lappend address_info $newreg
+
+    set offset 0x10
+    foreach register [dict get $specdata registers] {
+        set newreg [dict create]
+        dict set newreg name [dict get $register name]
+        set width 8
+        dict set newreg width $width
+        dict set newreg offset $offset
+        set offset [format 0x%x [expr $offset + $width]]
+        lappend address_info $newreg
+    }
+
+    return $address_info
+}
+
+proc find_register_offset_by_name {return_var address_info register_name} {
+    global $return_var
+    foreach address $address_info {
+        puts $address
+        if {[dict get $address name] == $register_name} {
+            set $return_var [dict get $address offset]
+            return 0
+        }
+    }
+    return -1
+}
+
+proc get_num_words_in_address_space {specdata} {
+    set interface [dict get $specdata axi4lite_interface]
+    set reserved_addresses [dict get $interface reserved_addresses]
+    set num_regs [llength [dict get $specdata registers]]
+    return [expr $reserved_addresses + ($num_regs * 2)]
+}
+
+proc get_axi4lite_interface_addr_width {specdata} {
+    # HLS reserves 64 bits for each register for the user register file and 32 bits for each of its own registers, regardless of the actual used register size
+    set bytes_per_word 4
+    return [clog2 [expr [get_num_words_in_address_space $specdata] * $bytes_per_word]]
+}

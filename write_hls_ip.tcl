@@ -20,8 +20,6 @@ set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
 
-puts $specdata
-
 set outfile_path ${script_dir}/intermediates/[dict get $specdata ip_name].cpp
 
 # Create the C++ intermediate

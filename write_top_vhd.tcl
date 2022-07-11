@@ -19,11 +19,6 @@ set ip_name [dict get $specdata ip_name]
 set outfile_path ${script_dir}/intermediates/${ip_name}/${ip_name}_top.vhd
 set tplfile_path ${script_dir}/tpl/cdc.vhd.tpl
 
-set interface [dict get $specdata axi4lite_interface]
-
-# HLS reserves space for 64-bit registers for user register file and 32-bit registers for its own, regardless of the actual used register size
-set num_regs [expr ([dict get $interface reserved_addresses]) + ([llength [dict get $specdata registers]] * 2)]
-set addr_width [clog2 $num_regs]
 set module_name [file rootname [file tail $specfile_path]]
 set hls_module [dict get $specdata ip_name]
 

@@ -48,6 +48,8 @@ foreach register [dict get $specdata registers] {
 dict set modified_specdata registers $modified_registers
 set specdata $modified_specdata
 
+set address_info [get_register_addresses $specdata]
+
 # load the template
 set cdc_tmpl [open $tplfile_path r]
 set tmpl [read $cdc_tmpl]

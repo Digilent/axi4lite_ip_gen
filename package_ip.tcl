@@ -35,7 +35,8 @@ create_peripheral $vendor user $name $version -dir $repo
 
 set interface [dict get $specdata axi4lite_interface]
 set interface_name [dict get $interface name]
-set num_regs [expr [dict get $interface reserved_addresses] + [llength [dict get $specdata registers]]]
+set num_regs [expr ([dict get $interface reserved_addresses]) + ([llength [dict get $specdata registers]] * 2)]
+set addr_width [clog2 $num_regs]
 add_peripheral_interface [dict get $interface name] -interface_mode slave -axi_type lite [ipx::find_open_core $vlnv]
 set_property VALUE $num_regs [ipx::get_bus_parameters WIZ_NUM_REG -of_objects [ipx::get_bus_interfaces  -of_objects [ipx::find_open_core $vlnv]]]
 ## find addr_width
@@ -102,36 +103,50 @@ proc import_hdl_file {filepath to_group} {
     set_property library_name xil_defaultlib [ipx::get_files hdl/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
 }
 
-import_hdl_file ${script_dir}/intermediates/${ip_name}_top.vhd $synthesis_group
-set_property top ${ip_name}_top [current_fileset]
+foreach filepath [glob ${script_dir}/intermediates/${ip_name}/*.vhd] {
+    import_hdl_file $filepath $synthesis_group
+}
 
-import_hdl_file ${script_dir}/intermediates/${ip_name}.vhd $synthesis_group
 foreach filepath [glob ${script_dir}/src/*.vhd] {
     import_hdl_file $filepath $synthesis_group
 }
 
+set_property top ${ip_name}_top [current_fileset]
+
 # Add Customization Parameters
 
 # Adjust Ports and Interfaces
-## attach the reset
-set reset_interface [dict get $interface name]_RST
-ipx::add_port_map RST [ipx::get_bus_interfaces ${reset_interface} -of_objects [ipx::current_core]]
-set_property physical_name [dict get $interface reset] [ipx::get_port_maps RST -of_objects [ipx::get_bus_interfaces ${reset_interface} -of_objects [ipx::current_core]]]
-set_property name ${reset_interface}N [ipx::get_bus_interfaces ${reset_interface} -of_objects [ipx::current_core]]
-
+## merge changes before doing anything, to ensure tcl objects are synced
 ipx::merge_project_changes ports [ipx::current_core]
+## test for the reset port, if it doesn't exit, create it
+set reset_name [dict get $interface reset]
+set rst_obj [ipx::get_bus_interfaces $reset_name -of_objects [ipx::current_core]]
+if {$rst_obj == ""} {
+    ipx::add_bus_interface $reset_name [ipx::current_core]
+    set rst_obj [ipx::get_bus_interfaces $reset_name -of_objects [ipx::current_core]]
+    set_property abstraction_type_vlnv xilinx.com:signal:reset_rtl:1.0 $rst_obj
+    set_property bus_type_vlnv xilinx.com:signal:reset:1.0 $rst_obj
+    set_property display_name $reset_name $rst_obj
+    ipx::add_bus_parameter POLARITY $rst_obj
+    set_property value ACTIVE_LOW [ipx::get_bus_parameters POLARITY -of_objects $rst_obj]
+    ipx::add_port_map RST $rst_obj
+    set_property physical_name $reset_name [ipx::get_port_maps RST -of_objects $rst_obj]
+}
+ipx::add_port_map RST [ipx::get_bus_interfaces ${reset_name} -of_objects [ipx::current_core]]
+set_property physical_name [dict get $interface reset] [ipx::get_port_maps RST -of_objects [ipx::get_bus_interfaces ${reset_name} -of_objects [ipx::current_core]]]
 
+## set default drive level of all ports to 0 (FIXME)
 foreach register [dict get $specdata registers] {
 	foreach bitfield [dict get $register bitfields] {
 		set prefix [get_prefix $specdata [dict get $bitfield clock_domain]]
-		set_property driver_value 0 [ipx::get_ports ${prefix}[dict get $bitfield name] -of_objects [ipx::current_core]]
+        set ip_port [ipx::get_ports ${prefix}[dict get $bitfield name] -of_objects [ipx::current_core]]
+		set_property driver_value 0 $ip_port
 	}
 }
 
 ## add clock parameters and associate them with interfaces and resets as necessary
 set_property ipi_drc {ignore_freq_hz true} [ipx::current_core]
 
-set target_freq_hz [expr "1000000000 / [dict get $specdata target_clk_period]"]
 foreach clock [dict get $specdata clocks] {
     set clock_name [dict get $clock name]
     puts "Configuring clock $clock_name"
@@ -148,17 +163,16 @@ foreach clock [dict get $specdata clocks] {
         ipx::add_port_map CLK $clk_obj
         set_property physical_name $clock_name [ipx::get_port_maps CLK -of_objects $clk_obj]
     }
-
-    ipx::add_bus_parameter FREQ_HZ $clk_obj
-    set_property value $target_freq_hz [ipx::get_bus_parameters FREQ_HZ -of_objects $clk_obj]
 }
 
+set axi_rst [dict get [dict get $specdata axi4lite_interface] reset]
 set axi_intf_name [dict get [dict get $specdata axi4lite_interface] name]
 set axi_clk [dict get [dict get $specdata axi4lite_interface] clock_domain]
-set axi_rst [dict get [dict get $specdata axi4lite_interface] reset]
-set_property value $axi_rst [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces $axi_clk -of_objects [ipx::current_core]]]
+set axi_clk_intf [ipx::get_bus_interfaces $axi_clk -of_objects [ipx::current_core]]
+ipx::add_bus_parameter ASSOCIATED_RESET $axi_clk_intf
+set_property value $axi_rst [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects $axi_clk_intf]
 ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces $axi_clk -of_objects [ipx::current_core]]
-set_property value $axi_intf_name [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces $axi_clk -of_objects [ipx::current_core]]]
+set_property value $axi_intf_name [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects $axi_clk_intf]
 # FIXME: do the other ports need to be associated with their clocks?
 
 # Define Addressing and Memory
