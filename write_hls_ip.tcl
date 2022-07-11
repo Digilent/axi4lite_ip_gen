@@ -19,8 +19,8 @@ set specfile [open $specfile_path r]
 set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
-
-set outfile_path ${script_dir}/intermediates/[dict get $specdata ip_name].cpp
+set ip_name [dict get $specdata ip_name]
+set outfile_path ${script_dir}/intermediates/${ip_name}/[dict get $specdata ip_name].cpp
 
 # Create the C++ intermediate
 source ${script_dir}/write_hls_cpp.tcl
@@ -31,7 +31,7 @@ source ${script_dir}/write_hls_cpp.tcl
 set PROJ_DIR ${script_dir}/tmp
 set SOURCE_DIR ${script_dir}/src
 set PROJ_NAME "ws"
-set PROJ_TOP [dict get $specdata ip_name]
+set PROJ_TOP ${ip_name}
 set SOLUTION_NAME "sol1"
 set SOLUTION_PART [dict get $specdata fpga_part]
 set SOLUTION_CLKP [dict get $specdata target_clk_period]
@@ -63,8 +63,9 @@ create_clock -period $SOLUTION_CLKP
 # Run Vitis HLS Stages
 # ------------------------------------------------------------------------------
 csynth_design
+set zipfile "${script_dir}/intermediates/${ip_name}/${PROJ_TOP}.zip"
 # cosim_design -wave_debug -trace_level all
-export_design -rtl verilog -format ip_catalog -version $VERSION -description $DESCRIPTION -vendor $VENDOR -display_name $DISPLAY_NAME -output "${script_dir}/intermediates/${PROJ_TOP}.zip"
+export_design -rtl verilog -format ip_catalog -version $VERSION -description $DESCRIPTION -vendor $VENDOR -display_name $DISPLAY_NAME -output $zipfile
 
 # -----------------------------------------------------------------------------
 # Open project in GUI
@@ -81,7 +82,7 @@ if {[file exists ${script_dir}/intermediates/${PROJ_TOP}] == 0} {
 set unzip_script [open "${script_dir}/intermediates/${PROJ_TOP}/unzip.sh" w]
 set zipped_files [list "hdl/vhdl/${PROJ_TOP}.vhd" "hdl/vhdl/${PROJ_TOP}_control_s_axi.vhd"]
 foreach output_file $zipped_files {
-    puts $unzip_script "unzip -o -j ${script_dir}/intermediates/${PROJ_TOP}.zip ${output_file} -d ${script_dir}/intermediates/${PROJ_TOP}"
+    puts $unzip_script "unzip -o -j ${zipfile} ${output_file} -d ${script_dir}/intermediates/${PROJ_TOP}"
 }
 close $unzip_script
 

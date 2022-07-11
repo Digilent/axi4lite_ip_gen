@@ -4,9 +4,6 @@
 set script_dir [file dirname [file normalize [info script]]]
 source ${script_dir}/util.tcl
 
-set outfile_path ${script_dir}/intermediates/driver_hw.h
-set tplfile_path ${script_dir}/tpl/driver_hw.h.tpl
-
 #script has no calling context, so set up data for testing
 package require json
 
@@ -17,6 +14,9 @@ set specfile [open $specfile_path r]
 set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
+
+set outfile_path ${script_dir}/intermediates/${ip_name}/${ip_name}_hw.h
+set tplfile_path ${script_dir}/tpl/driver_hw.h.tpl
 
 # set up vars if necessary
 

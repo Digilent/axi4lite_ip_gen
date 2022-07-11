@@ -15,7 +15,8 @@ set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
 
-set outfile_path ${script_dir}/intermediates/[dict get $specdata ip_name].cpp
+set ip_name [dict get $specdata ip_name]
+set outfile_path ${script_dir}/intermediates/${ip_name}/${ip_name}.cpp
 
 # set up vars if necessary
 set modified_specdata $specdata
