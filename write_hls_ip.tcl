@@ -73,4 +73,18 @@ export_design -rtl verilog -format ip_catalog -version $VERSION -description $DE
 # -----------------------------------------------------------------------------
 # vitis_hls -p $PROJ_NAME
 
+set axi_intf [dict get $specdata axi4lite_interface]
+set axi_intf_name [dict get $axi_intf name]
+if {[file exists ${script_dir}/intermediates/${PROJ_TOP}] == 0} {
+    file mkdir ${script_dir}/intermediates/${PROJ_TOP}
+}
+# fixme else wipe out the directory contents
+
+set unzip_script [open "${script_dir}/intermediates/${PROJ_TOP}/unzip.sh" w]
+set zipped_files [list "hdl/vhdl/${PROJ_TOP}.vhd" "hdl/vhdl/${PROJ_TOP}_control_s_axi.vhd"]
+foreach output_file $zipped_files {
+    puts $unzip_script "unzip -o -j ${script_dir}/intermediates/${PROJ_TOP}.zip ${output_file} -d ${script_dir}/intermediates/${PROJ_TOP}"
+}
+close $unzip_script
+
 exit
