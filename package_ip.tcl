@@ -34,13 +34,9 @@ create_project -force container $script_dir/proj -part [dict get $specdata fpga_
 create_peripheral $vendor user $name $version -dir $repo
 
 set interface [dict get $specdata axi4lite_interface]
-set interface_name [dict get $interface name]
-set num_regs [expr ([dict get $interface reserved_addresses]) + ([llength [dict get $specdata registers]] * 2)]
-set addr_width [clog2 $num_regs]
+set num_regs [get_num_words_in_address_space $specdata]
 add_peripheral_interface [dict get $interface name] -interface_mode slave -axi_type lite [ipx::find_open_core $vlnv]
 set_property VALUE $num_regs [ipx::get_bus_parameters WIZ_NUM_REG -of_objects [ipx::get_bus_interfaces  -of_objects [ipx::find_open_core $vlnv]]]
-## find addr_width
-
 
 generate_peripheral -force -driver -bfm_example_design -debug_hw_example_design [ipx::find_open_core $vlnv]
 write_peripheral [ipx::find_open_core $vlnv]
