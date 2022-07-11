@@ -34,7 +34,8 @@ void [dict get $specdata ip_name] (
 
 % foreach register [dict get $specdata registers] {
 %   set port [dict get $register name]
-    #pragma HLS INTERFACE s_axilite port=${port}Axil
+%   set status [find_register_offset_by_name offset $address_info $port]
+    #pragma HLS INTERFACE s_axilite offset=${offset} port=${port}Axil
 
 %   if {[dict get $register io_direction] == "in"} {
     #pragma HLS INTERFACE ap_none port=${port}Axil
