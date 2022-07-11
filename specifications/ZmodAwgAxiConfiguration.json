@@ -1,0 +1,183 @@
+{
+    "vendor": "digilent.com",
+    "ip_name": "ZmodAwgAxiConfiguration",
+    "underscore_name": "ZMOD_AWG_AXI_CONFIGURATION",
+    "version": "1.0",
+    "fpga_part": "xc7z020-clg400-1",
+    "target_clk_period": "8.00",
+    "axi4lite_interface": {
+        "name": "s_axi_control",
+        "clock_domain": "s_axi_aclk",
+        "reserved_addresses": 4,
+        "reset": "s_axi_areset_n"
+    },
+    "clocks": [
+        {
+            "comment": "note that each clock name must end in `clk` case-insensitive, in order for the ip packager to detect them as clocks",
+            "name": "s_axi_aclk",
+            "prefix": "l"
+        },
+        {
+            "name": "SysClk",
+            "prefix": "s"
+        },
+        {
+            "name": "DAC_InIO_Clk",
+            "prefix": "c"
+        }
+    ],
+    "registers": [
+        {
+            "comment": ["all registers should be placed in ascending order of address in the register file and",
+                        "start with base address [axi4lite_interface][reserved_addresses] * sizeof(u32)"],
+            "name": "Control",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "DacEnable",
+                    "high_bit": 0,
+                    "low_bit": 0,
+                    "clock_domain": "SysClk"
+                },
+                {
+                    "name": "TestMode",
+                    "high_bit": 1,
+                    "low_bit": 1,
+                    "clock_domain": "SysClk"
+                },
+                {
+                    "name": "ExtCh1Scale",
+                    "high_bit": 2,
+                    "low_bit": 2,
+                    "clock_domain": "SysClk"
+                },
+                {
+                    "name": "ExtCh2Scale",
+                    "high_bit": 3,
+                    "low_bit": 3,
+                    "clock_domain": "SysClk"
+                }
+            ]
+        },
+        {
+            "name": "Status",
+            "access_type": "ro",
+            "bitfields": [
+                {
+                    "name": "InitDoneDAC",
+                    "high_bit": 0,
+                    "low_bit": 0,
+                    "clock_domain": "SysClk"
+                },
+                {
+                    "name": "ConfigError",
+                    "high_bit": 1,
+                    "low_bit": 1,
+                    "clock_domain": "SysClk"
+                }
+            ]
+        },
+        {
+            "name": "ExtCh1HgMultCoef",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "ExtCh1HgMultCoef",
+                    "high_bit": 17,
+                    "low_bit": 0,
+                    "clock_domain": "DAC_InIO_Clk"
+                }
+            ]
+        },
+        {
+            "name": "ExtCh1HgAddCoef",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "ExtCh1HgAddCoef",
+                    "high_bit": 17,
+                    "low_bit": 0,
+                    "clock_domain": "DAC_InIO_Clk"
+                }
+            ]
+        },
+        {
+            "name": "ExtCh1LgMultCoef",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "ExtCh1LgMultCoef",
+                    "high_bit": 17,
+                    "low_bit": 0,
+                    "clock_domain": "DAC_InIO_Clk"
+                }
+            ]
+        },
+        {
+            "name": "ExtCh1LgAddCoef",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "ExtCh1LgAddCoef",
+                    "high_bit": 17,
+                    "low_bit": 0,
+                    "clock_domain": "DAC_InIO_Clk"
+                }
+            ]
+        },
+        {
+            "name": "ExtCh2HgMultCoef",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "ExtCh2HgMultCoef",
+                    "high_bit": 17,
+                    "low_bit": 0,
+                    "clock_domain": "DAC_InIO_Clk"
+                }
+            ]
+        },
+        {
+            "name": "ExtCh2HgAddCoef",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "ExtCh2HgAddCoef",
+                    "high_bit": 17,
+                    "low_bit": 0,
+                    "clock_domain": "DAC_InIO_Clk"
+                }
+            ]
+        },
+        {
+            "name": "ExtCh2LgMultCoef",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "ExtCh2LgMultCoef",
+                    "high_bit": 17,
+                    "low_bit": 0,
+                    "clock_domain": "DAC_InIO_Clk"
+                }
+            ]
+        },
+        {
+            "name": "ExtCh2LgAddCoef",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "ExtCh2LgAddCoef",
+                    "high_bit": 17,
+                    "low_bit": 0,
+                    "clock_domain": "DAC_InIO_Clk"
+                }
+            ]
+        }
+    ]
+}
+
+
+
+
+
+

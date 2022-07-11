@@ -1,13 +1,15 @@
-
 {
     "vendor": "digilent.com",
-    "ip_name": "TriggerControlAxiAdapter",
+    "ip_name": "ZmodScopeAxiConfiguration",
+    "underscore_name": "ZMOD_SCOPE_AXI_CONFIGURATION",
     "version": "1.0",
+    "fpga_part": "xc7z020-clg400-1",
+    "target_clk_period": "8.00",
     "axi4lite_interface": {
         "name": "s_axi_control",
         "clock_domain": "s_axi_control_clk",
-        "resetn_port": "s_axi_control_rst_n",
-        "baseaddr_offset": 0
+        "reserved_addresses": 4,
+        "reset": "s_axi_control_rst_n"
     },
     "clocks": [
         {
@@ -23,228 +25,183 @@
             "prefix": "l"
         }
     ],
-    "resets": [
-        {
-            "name": "s_axi_control_rst_n"
-        }
-    ],
     "registers": [
         {
-            "name": "ch1LgMultCoef",
-            "byte_offset": 16,
+            "name": "Ch1LgMultCoef",
+            "access_type": "rw",
             "bitfields": [
                 {
-                    "name": "ch1LgMultCoef",
+                    "name": "Ch1LgMultCoef",
                     "high_bit": 17,
                     "low_bit": 0,
-                    "access_type": "rw",
-                    "port": "cExtCh1LgMultCoef",
                     "clock_domain": "ADC_SamplingClock"
                 }
             ]
         },
         {
-            "name": "ch1LgAddCoef",
-            "byte_offset": 24,
+            "name": "Ch1LgAddCoef",
+            "access_type": "rw",
             "bitfields": [
                 {
-                    "name": "ch1LgAddCoef",
+                    "name": "Ch1LgAddCoef",
                     "high_bit": 17,
                     "low_bit": 0,
-                    "access_type": "rw",
-                    "port": "cExtCh1LgAddCoef",
                     "clock_domain": "ADC_SamplingClock"
                 }
             ]
         },
         {
-            "name": "ch1HgMultCoef",
-            "byte_offset": 32,
+            "name": "Ch1HgMultCoef",
+            "access_type": "rw",
             "bitfields": [
                 {
-                    "name": "ch1HgMultCoef",
+                    "name": "Ch1HgMultCoef",
                     "high_bit": 17,
                     "low_bit": 0,
-                    "access_type": "rw",
-                    "port": "cExtCh1HgMultCoef",
                     "clock_domain": "ADC_SamplingClock"
                 }
             ]
         },
         {
-            "name": "ch1HgAddCoef",
-            "byte_offset": 40,
+            "name": "Ch1HgAddCoef",
+            "access_type": "rw",
             "bitfields": [
                 {
-                    "name": "ch1HgAddCoef",
+                    "name": "Ch1HgAddCoef",
                     "high_bit": 17,
                     "low_bit": 0,
-                    "access_type": "rw",
-                    "port": "cExtCh1HgAddCoef",
                     "clock_domain": "ADC_SamplingClock"
                 }
             ]
         },
         {
-            "name": "ch2LgMultCoef",
-            "byte_offset": 48,
+            "name": "Ch2LgMultCoef",
+            "access_type": "rw",
             "bitfields": [
                 {
-                    "name": "ch2LgMultCoef",
+                    "name": "Ch2LgMultCoef",
                     "high_bit": 17,
                     "low_bit": 0,
-                    "access_type": "rw",
-                    "port": "cExtCh2LgMultCoef",
                     "clock_domain": "ADC_SamplingClock"
                 }
             ]
         },
         {
-            "name": "ch2LgAddCoef",
-            "byte_offset": 56,
+            "name": "Ch2LgAddCoef",
+            "access_type": "rw",
             "bitfields": [
                 {
-                    "name": "ch2LgAddCoef",
+                    "name": "Ch2LgAddCoef",
                     "high_bit": 17,
                     "low_bit": 0,
-                    "access_type": "rw",
-                    "port": "cExtCh2LgAddCoef",
                     "clock_domain": "ADC_SamplingClock"
                 }
             ]
         },
         {
-            "name": "ch2HgMultCoef",
-            "byte_offset": 64,
+            "name": "Ch2HgMultCoef",
+            "access_type": "rw",
             "bitfields": [
                 {
-                    "name": "ch2HgMultCoef",
+                    "name": "Ch2HgMultCoef",
                     "high_bit": 17,
                     "low_bit": 0,
-                    "access_type": "rw",
-                    "port": "cExtCh2HgMultCoef",
                     "clock_domain": "ADC_SamplingClock"
                 }
             ]
         },
         {
-            "name": "ch2HgAddCoef",
-            "byte_offset": 72,
+            "name": "Ch2HgAddCoef",
+            "access_type": "rw",
             "bitfields": [
                 {
-                    "name": "ch2HgAddCoef",
+                    "name": "Ch2HgAddCoef",
                     "high_bit": 17,
                     "low_bit": 0,
-                    "access_type": "rw",
-                    "port": "cExtCh2HgAddCoef",
                     "clock_domain": "ADC_SamplingClock"
                 }
             ]
         },
         {
-            "name": "config",
-            "byte_offset": 80,
+            "name": "Config",
+            "access_type": "rw",
             "bitfields": [
                 {
                     "name": "Ch1Gain",
                     "high_bit": 0,
                     "low_bit": 0,
-                    "access_type": "rw",
-                    "port": "sCh1GainConfig",
                     "clock_domain": "SysClk100"
                 },
                 {
                     "name": "Ch2Gain",
                     "high_bit": 1,
                     "low_bit": 1,
-                    "access_type": "rw",
-                    "port": "sCh2GainConfig",
                     "clock_domain": "SysClk100"
                 },
                 {
                     "name": "Ch1Coupling",
                     "high_bit": 2,
                     "low_bit": 2,
-                    "access_type": "rw",
-                    "port": "sCh1Coupling",
                     "clock_domain": "SysClk100"
                 },
                 {
                     "name": "Ch2Coupling",
                     "high_bit": 3,
                     "low_bit": 3,
-                    "access_type": "rw",
-                    "port": "sCh2Coupling",
                     "clock_domain": "SysClk100"
                 },
                 {
                     "name": "TestMode",
                     "high_bit": 4,
                     "low_bit": 4,
-                    "access_type": "rw",
-                    "port": "sTestMode",
                     "clock_domain": "SysClk100"
                 },
                 {
                     "name": "EnableAcquisition",
                     "high_bit": 5,
                     "low_bit": 5,
-                    "access_type": "rw",
-                    "port": "sEnableAcquisition",
                     "clock_domain": "SysClk100"
                 },
                 {
-                    "name": "SoftwareResetn",
+                    "name": "SwResetn",
                     "high_bit": 6,
                     "low_bit": 6,
-                    "access_type": "rw",
-                    "port": "lReset_n",
                     "clock_domain": "s_axi_control_clk"
                 }
             ]
         },
         {
-            "name": "status",
-            "byte_offset": 88,
+            "name": "Status",
+            "access_type": "ro",
             "bitfields": [
                 {
                     "name": "RstBusy",
                     "high_bit": 0,
                     "low_bit": 0,
-                    "access_type": "ro",
-                    "port": "sRstBusy",
                     "clock_domain": "SysClk100"
                 },
                 {
                     "name": "InitDoneADC",
                     "high_bit": 1,
                     "low_bit": 1,
-                    "access_type": "ro",
-                    "port": "sInitDoneADC",
                     "clock_domain": "SysClk100"
                 },
                 {
                     "name": "ConfigError",
                     "high_bit": 2,
                     "low_bit": 2,
-                    "access_type": "ro",
-                    "port": "sConfigError",
                     "clock_domain": "SysClk100"
                 },
                 {
                     "name": "InitDoneRelay",
                     "high_bit": 3,
                     "low_bit": 3,
-                    "access_type": "ro",
-                    "port": "sInitDoneRelay",
                     "clock_domain": "SysClk100"
                 },
                 {
                     "name": "DataOverflow",
                     "high_bit": 4,
                     "low_bit": 4,
-                    "access_type": "ro",
-                    "port": "sDataOverflow",
                     "clock_domain": "SysClk100"
                 }
             ]
