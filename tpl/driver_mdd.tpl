@@ -1,4 +1,4 @@
-% set driver_name [dict get $specdata name]
+% set driver_name [dict get $specdata ip_name]
 OPTION psf_version = 2.1;
 
 BEGIN DRIVER $driver_name
