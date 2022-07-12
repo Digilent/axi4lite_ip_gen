@@ -235,15 +235,9 @@ ${prefix}[dict get $port name] <= ${prefix}[dict get $port name]Int;
 %   foreach {direction cdc_group} $domain_ports {
 %     set low_index 0
 %     if {$direction == "in"} {
-%       set iprefix [get_prefix $specdata $domain]
-%       set oprefix [get_prefix $specdata [dict get $interface clock_domain]]
-%       set opostfix ""
-%       set pushsignal {'1'}
 %       set inclk $domain
 %       set outclk [dict get $interface clock_domain]
 %     } else {
-%       set opostfix "Int"
-%       set pushsignal "[get_prefix $specdata [dict get $interface clock_domain]]Interrupt"
 %       set inclk [dict get $interface clock_domain]
 %       set outclk $domain
 %     }
@@ -252,6 +246,26 @@ ${prefix}[dict get $port name] <= ${prefix}[dict get $port name]Int;
 %     foreach port [dict get $cdc_group ports] {
 %       set port_name [dict get $port name]
 -- Handshake CDC for ${port_name} from ${inclk} to ${outclk}
+
+%       if {$direction == "in"} {
+--- trigger handshake push on any difference in the input bus
+${port_name}_from_${inclk}_to_${outclk}_InstHandshake: ChangeDetectHandshake 
+generic map (
+    kDataWidth => [dict get $port width]
+)
+port map(
+    InClk => ${inclk},
+    OutClk => ${outclk},
+    iData => ${iprefix}${port_name},
+    oData => ${oprefix}${port_name},
+    iRdy => open,
+    oValid => open,
+    aiReset => ${iprefix}Rst,
+    aoReset => ${oprefix}Rst
+);
+
+%       } else {
+--- trigger handshake on HLS interrupt
 ${port_name}_from_${inclk}_to_${outclk}_InstHandshake: HandshakeData 
 generic map (
     kDataWidth => [dict get $port width]
@@ -260,15 +274,16 @@ port map(
     InClk => ${inclk},
     OutClk => ${outclk},
     iData => ${iprefix}${port_name},
-    oData => ${oprefix}${port_name}${opostfix},
-    iPush => ${pushsignal},
-    iRdy => open, -- unused? no point in applying backpressure to the hls core, axi lite transactions should be infrequent enough
-    oAck => '1', -- tie high, don't apply any backpressure to this
-    oValid => open, -- unused? no downstream register write enable is needed
+    oData => ${oprefix}${port_name}In,
+    iPush => [get_prefix $specdata [dict get $interface clock_domain]]Interrupt,
+    iRdy => open,
+    oAck => '1',
+    oValid => open,
     aiReset => ${iprefix}Rst,
     aoReset => ${oprefix}Rst
 );
 
+%       }
 %     }
 %   }
 % }
