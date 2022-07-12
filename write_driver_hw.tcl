@@ -15,20 +15,35 @@ set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
 
-set outfile_path ${script_dir}/intermediates/${ip_name}/${ip_name}_hw.h
-set tplfile_path ${script_dir}/tpl/driver_hw.h.tpl
+set intermediate_sw_dir ${script_dir}/intermediates/${ip_name}/sw
+if {[file exists $intermediate_sw_dir] == 0} {file mkdir $intermediate_sw_dir}
+set hwheader_path ${intermediate_sw_dir}/${ip_name}_hw.h
+set makefile_path ${intermediate_sw_dir}/Makefile
+set hwheader_tpl_path ${script_dir}/tpl/driver_hw.h.tpl
+set makefile_tpl_path ${script_dir}/tpl/Makefile.tpl
 
 # set up vars if necessary
 
 # load the template
-set cdc_tmpl [open $tplfile_path r]
-set tmpl [read $cdc_tmpl]
-close $cdc_tmpl
+set hwheader [open $hwheader_tpl_path r]
+set tmpl [read $hwheader]
+close $hwheader
 
 # do the thing
 set out [list]
 eval [substify $tmpl out]
 
-set f [open $outfile_path w]
+set f [open $hwheader_path w]
 puts $f $out
+close $f
+
+# read in the makefile text, replace the substring <XXXX> with the IP name, then write it out
+set f [open $makefile_tpl_path r]
+set data [read $f]
+close $f
+
+set data [string map "<XXXX> ${ip_name}" $data]
+
+set f [open $makefile_path w]
+puts $f $data
 close $f
