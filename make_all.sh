@@ -1,8 +1,24 @@
 #! bash
 # $1=./examples/ExampleIp.json
 
-filename=$(basename $1)
+ARG0=$(realpath $0)
+ARG1=$(realpath $1)
+ARG2=$(realpath $2)
+FILENAME=$(basename $ARG1)
+INTERMEDIATES=$(dirname $ARG0)/intermediates/${FILENAME%.*}
+LOGDIR=$(dirname $ARG0)/logs
 
-vitis_hls -f write_hls_ip.tcl $1
-sh ./intermediates/${filename%.*}/unzip.sh
-vivado -mode batch -source ./package_ip.tcl -tclargs $1 $2
+# cd into (script)/logs, creating it if it doesn't exist
+[[ ! -d $LOGDIR ]] && mkdir $LOGDIR
+echo "changing directory to $LOGDIR"
+pushd $LOGDIR &> /dev/null
+
+[[ ! -d $INTERMEDIATES ]] && mkdir $INTERMEDIATES
+
+vitis_hls -f ../write_hls_ip.tcl $ARG1
+sh $INTERMEDIATES/unzip.sh
+vivado -mode batch -source ../package_ip.tcl -notrace -tclargs $ARG1 $ARG2
+
+# return to starting dir
+echo "returning to original working dir"
+popd &> /dev/null

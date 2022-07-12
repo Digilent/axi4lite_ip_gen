@@ -6,3 +6,4 @@ ws
 intermediates/*
 ip_repo
 !**/.keep
+logs
