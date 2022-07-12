@@ -13,6 +13,8 @@ LOGDIR=$(dirname $ARG0)/logs
 echo "changing directory to $LOGDIR"
 pushd $LOGDIR &> /dev/null
 
+# wipe out contents of the intermediates directory for this ip, and create it if it doesn't exist
+[[ -d $INTERMEDIATES ]] && rm -rf $INTERMEDIATES/*
 [[ ! -d $INTERMEDIATES ]] && mkdir $INTERMEDIATES
 
 vitis_hls -f ../write_hls_ip.tcl $ARG1
