@@ -24,12 +24,11 @@ set makefile_tpl_path ${script_dir}/tpl/Makefile.tpl
 
 # set up vars if necessary
 
-# load the template
+# write the driver header
 set hwheader [open $hwheader_tpl_path r]
 set tmpl [read $hwheader]
 close $hwheader
 
-# do the thing
 set out [list]
 eval [substify $tmpl out]
 
@@ -46,4 +45,16 @@ set data [string map "<XXXX> ${ip_name}" $data]
 
 set f [open $makefile_path w]
 puts $f $data
+close $f
+
+# write the MDD file
+set mdd [open $mdd_tpl_path r]
+set tmpl [read $mdd]
+close $mdd
+
+set out [list]
+eval [substify $tmpl out]
+
+set f [open $mdd_path w]
+puts $f $out
 close $f
