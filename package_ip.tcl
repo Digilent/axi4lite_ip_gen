@@ -75,10 +75,7 @@ set top_file_path [file join $ip_path src ${name}_v${major_version}_${minor_vers
 source [file join $script_dir write_top_vhd.tcl]
 
 ## Write software drivers
-### wipe out existing files
-ipx::remove_file drivers/TriggerControl_v1_0/src/* [ipx::get_file_groups xilinx_softwaredriver -of_objects [ipx::current_core]]
-ipx::remove_file drivers/TriggerControl_v1_0/data/* [ipx::get_file_groups xilinx_softwaredriver -of_objects [ipx::current_core]]
-### generate intermediates and add them to the IP
+### wipe out existing files, generate new intermediates, and add them to the IP
 source [file join $script_dir write_driver_hw.tcl]
 
 # Wipe out existing HDL files and import generated ones

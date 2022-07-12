@@ -15,77 +15,88 @@ set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
 
+set driver_name ${ip_name}_v1_0
+
 set intermediate_sw_dir ${script_dir}/intermediates/${ip_name}/sw
 if {[file exists $intermediate_sw_dir] == 0} {file mkdir $intermediate_sw_dir}
-set hwheader_path ${intermediate_sw_dir}/${ip_name}_hw.h
-set makefile_path ${intermediate_sw_dir}/Makefile
-set mdd_path ${intermediate_sw_dir}/${ip_name}.mdd
-set xpar_tcl_path ${intermediate_sw_dir}/${ip_name}.tcl
-set hwheader_tpl_path ${script_dir}/tpl/driver_header.tpl
-set makefile_tpl_path ${script_dir}/tpl/Makefile.tpl
-set mdd_tpl_path ${script_dir}/tpl/driver_mdd.tpl
-set xpar_tcl_tpl_path ${script_dir}/tpl/driver_xpar.tcl.tpl
+if {[file exists ${intermediate_sw_dir}/${driver_name}] == 0} {file mkdir ${intermediate_sw_dir}/${driver_name}}
+foreach subdir {src data} {
+    if {[file exists ${intermediate_sw_dir}/${driver_name}/${subdir}] == 0} {file mkdir ${intermediate_sw_dir}/${driver_name}/${subdir}}
+}
 
-# set up vars if necessary
+set sources [list]
 
-# write the driver header
-set hwheader [open $hwheader_tpl_path r]
-set tmpl [read $hwheader]
-close $hwheader
+set newsource [dict create]
+set hwheader_path ${intermediate_sw_dir}/${driver_name}/src/${ip_name}_hw.h; # used by driver.h.tpl
+dict set newsource filepath $hwheader_path
+dict set newsource template ${script_dir}/tpl/driver_hw.h.tpl
+dict set newsource type "tpl"
+lappend sources $newsource
 
-set out [list]
-eval [substify $tmpl out]
 
-set f [open $hwheader_path w]
-puts $f $out
-close $f
+set newsource [dict create]
+dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/Makefile
+dict set newsource template ${script_dir}/tpl/Makefile.tpl
+dict set newsource type "xmlish"
+lappend sources $newsource
 
-# read in the makefile text, replace the substring <XXXX> with the IP name, then write it out
-set f [open $makefile_tpl_path r]
-set data [read $f]
-close $f
+set newsource [dict create]
+dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/${ip_name}.c
+dict set newsource template ${script_dir}/tpl/driver.c.tpl
+dict set newsource type "tpl"
+lappend sources $newsource
 
-set data [string map "<XXXX> ${ip_name}" $data]
+set newsource [dict create]
+dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/${ip_name}.h
+dict set newsource template ${script_dir}/tpl/driver.h.tpl
+dict set newsource type "tpl"
+lappend sources $newsource
 
-set f [open $makefile_path w]
-puts $f $data
-close $f
+set newsource [dict create]
+dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/data/${ip_name}.mdd
+dict set newsource template ${script_dir}/tpl/driver_mdd.tpl
+dict set newsource type "tpl"
+lappend sources $newsource
 
-# write the MDD file
-set mdd [open $mdd_tpl_path r]
-set tmpl [read $mdd]
-close $mdd
+set newsource [dict create]
+dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/data/${ip_name}.tcl
+dict set newsource template ${script_dir}/tpl/driver_xpar.tcl.tpl
+dict set newsource type "xmlish"
+lappend sources $newsource
 
-set out [list]
-eval [substify $tmpl out]
+# grab path to final IP
+set component_path [get_files */component.xml]
+set ip_path [file dirname $component_path]
 
-set f [open $mdd_path w]
-puts $f $out
-close $f
+# wipe out default driver files but leave the driectories in place
+foreach subdir {src data} {
+    foreach file [glob -nocomplain ${ip_path}/drivers/${driver_name}/${subdir}/*] {
+        ipx::remove_file $file [ipx::get_file_groups xilinx_softwaredriver -of_objects [ipx::current_core]]
+        file delete $file
+    }
+}
 
-# write the driver tcl file
-set f [open $xpar_tcl_tpl_path r]
-set data [read $f]
-close $f
-
-set interface [dict get $specdata axi4lite_interface]
-set interface_name [dict get $interface name]
-set data [string map "<ip_name> ${ip_name}" $data]
-set data [string map "<interface> ${interface_name}" $data]
-
-set f [open $xpar_tcl_path w]
-puts $f $data
-close $f
-
-# FIXME add templates for ${ip_name}.h or ${ip_name}.c that don't overwrite version controlled stuff
+set xmlish_map "<XXXX> ${ip_name} <ip_name> ${ip_name} <interface> ${interface_name}"
+foreach srcfile $sources {
+    set f [open [dict get $srcfile template] r]
+    set template_data [read $f]
+    close $f
+    if {[dict get $srcfile type] == "tpl"} {
+        set output_data [list]
+        eval [substify $template_data output_data]
+    } elseif {[dict get $srcfile type] == "xmlish"} {
+        set output_data [string map $xmlish_map $template_data]
+    }
+    set f [open [dict get $srcfile filepath] w]
+    puts $f $output_data
+    close $f
+}
 
 # add the generated files to the IP
-set to_group xilinx_softwaredriver
-add_files -norecurse -copy_to ${ip_path}/drivers/src ${hwheader_path}
-add_files -norecurse -copy_to ${ip_path}/drivers/src ${makefile_path}
-add_files -norecurse -copy_to ${ip_path}/drivers/data ${mdd_path}
-add_files -norecurse -copy_to ${ip_path}/drivers/data ${xpar_tcl_path}
-ipx::add_file ${ip_path}/drivers/src/[file tail $hwheader_path] [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
-ipx::add_file ${ip_path}/drivers/src/[file tail $makefile_path] [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
-ipx::add_file ${ip_path}/drivers/data/[file tail $mdd_path] [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
-ipx::add_file ${ip_path}/drivers/data/[file tail $xpar_tcl_path] [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
+set file_group xilinx_softwaredriver
+foreach subdir {data src} {
+    foreach source_file [glob ${intermediate_sw_dir}/${driver_name}/${subdir}/*] {
+        add_files -norecurse -copy_to ${ip_path}/drivers/${driver_name}/${subdir} ${source_file}
+        ipx::add_file ${ip_path}/drivers/${driver_name}/${subdir}/[file tail $source_file] [ipx::get_file_groups $file_group -of_objects [ipx::current_core]]
+    }
+}

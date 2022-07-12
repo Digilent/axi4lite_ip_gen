@@ -1,9 +1,9 @@
-% set driver_name [dict get $specdata ip_name]
+% set ip_name [dict get $specdata ip_name]
 OPTION psf_version = 2.1;
 
-BEGIN DRIVER $driver_name
-	OPTION supported_peripherals = (${driver_name});
+BEGIN DRIVER ${ip_name}
+	OPTION supported_peripherals = (${ip_name});
 	OPTION copyfiles = all;
 	OPTION VERSION = 1.0;
-	OPTION NAME = $driver_name;
+	OPTION NAME = ${ip_name};
 END DRIVER

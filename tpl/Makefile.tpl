@@ -19,7 +19,7 @@ INCLUDEFILES:=*.h
 
 OBJECTS =	$(addsuffix .o, $(basename $(wildcard *.c)))
 
-IPNAME=<XXXX>
+IPNAME=<ip_name>
 
 libs: banner ${IPNAME}_libs clean
 
