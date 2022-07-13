@@ -1,5 +1,5 @@
 % set ip_name [dict get $specdata ip_name]
-% set protection_macro [dict get $specdata underscore_name]_H_
+% set protection_macro [dict get $specdata underscore_name]_HW_H_
 #ifndef ${protection_macro}
 #define ${protection_macro}
 
@@ -9,6 +9,7 @@
 % set prefix [dict get $specdata underscore_name]
 
 /* Register offsets */
+
 % set registers [get_register_addresses $specdata]
 % foreach register $registers {
 #define ${prefix}_[string toupper [dict get $register name]]_REG_OFFSET [dict get $register offset]
