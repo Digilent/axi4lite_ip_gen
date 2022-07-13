@@ -114,6 +114,22 @@ port (
 );
 end component;
 
+component ChangeDetectHandshake is
+generic (
+    kDataWidth : natural := 8
+);
+port (
+    InClk : in STD_LOGIC;
+    OutClk : in STD_LOGIC;
+    iData : in STD_LOGIC_VECTOR (kDataWidth-1 downto 0);
+    oData : out STD_LOGIC_VECTOR (kDataWidth-1 downto 0);
+    iRdy : out STD_LOGIC;
+    oValid : out STD_LOGIC;
+    aiReset : in std_logic;
+    aoReset : in std_logic
+);
+end component;
+
 component ResetBridge is
 generic (
     kPolarity : std_logic := '1'
@@ -274,7 +290,7 @@ port map(
     InClk => ${inclk},
     OutClk => ${outclk},
     iData => ${iprefix}${port_name},
-    oData => ${oprefix}${port_name}In,
+    oData => ${oprefix}${port_name}Int,
     iPush => [get_prefix $specdata [dict get $interface clock_domain]]Interrupt,
     iRdy => open,
     oAck => '1',
