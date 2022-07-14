@@ -69,10 +69,10 @@ set component_path [get_files */component.xml]
 set ip_path [file dirname $component_path]
 
 ## Write top-level HDL file
-set top_file_path [file join $ip_path src ${name}_v${major_version}_${minor_version}.v]
-
-## Write CDC HDL file
 source [file join $script_dir write_top_vhd.tcl]
+
+# Write CDC XDC file
+source [file join $script_dir write_xdc.tcl]
 
 ## Write software drivers
 ### wipe out existing files, generate new intermediates, and add them to the IP
@@ -80,6 +80,8 @@ source [file join $script_dir write_driver_hw.tcl]
 
 # Wipe out existing HDL files and import generated ones
 remove_files [get_files -filter name=~${ip_path}/hdl/*]
+# file delete ${ip_path}/hdl
+if {[file exists ${ip_path}/src] == 0} {file mkdir ${ip_path}/src}
 
 # Switch file groups to be language-agnostic
 ipx::remove_file_group xilinx_verilogsynthesis [ipx::current_core]
@@ -91,22 +93,24 @@ set sim_group xilinx_anylanguagebehavioralsimulation
 set_property model_name ${ip_name}_top [ipx::get_file_groups $synthesis_group]
 set_property model_name ${ip_name}_top [ipx::get_file_groups $sim_group]
 
-proc import_hdl_file {filepath to_group} {
+proc import_src_file {filepath to_group} {
     global ip_path
     set filename [file tail $filepath]
-    add_files -norecurse -copy_to ${ip_path}/hdl ${filepath}
-    ipx::add_file ${ip_path}/hdl/${filename} [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
-    set_property type vhdlSource [ipx::get_files hdl/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
-    set_property library_name xil_defaultlib [ipx::get_files hdl/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
+    add_files -norecurse -copy_to ${ip_path}/src ${filepath}
+    ipx::add_file ${ip_path}/src/${filename} [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
+    set_property type vhdlSource [ipx::get_files src/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
+    set_property library_name xil_defaultlib [ipx::get_files src/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
 }
 
 foreach filepath [glob ${script_dir}/intermediates/${ip_name}/*.vhd] {
-    import_hdl_file $filepath $synthesis_group
+    import_src_file $filepath $synthesis_group
 }
 
 foreach filepath [glob ${script_dir}/src/*.vhd] {
-    import_hdl_file $filepath $synthesis_group
+    import_src_file $filepath $synthesis_group
 }
+
+import_src_file ${script_dir}/intermediates/${ip_name}/${ip_name}_cdc.xdc $synthesis_group
 
 set_property top ${ip_name}_top [current_fileset]
 

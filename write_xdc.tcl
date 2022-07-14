@@ -4,8 +4,6 @@
 set script_dir [file dirname [file normalize [info script]]]
 source ${script_dir}/util.tcl
 
-set outfile_path ${script_dir}/intermediates/cdc.xdc
-
 #script has no calling context, so set up data for testing
 package require json
 source [file join $script_dir util.tcl]
@@ -15,6 +13,9 @@ set specfile [open $specfile_path r]
 set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
+
+set ip_name [dict get $specdata ip_name]
+set outfile_path ${script_dir}/intermediates/${ip_name}/${ip_name}_cdc.xdc
 
 # set up data for the template to use
 set out {
