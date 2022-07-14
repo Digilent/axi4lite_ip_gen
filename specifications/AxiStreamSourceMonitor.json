@@ -1,0 +1,52 @@
+{
+    "vendor": "digilent.com",
+    "ip_name": "AxiStreamSourceMonitor",
+    "underscore_name": "AXI_STREAM_SOURCE_MONITOR",
+    "version": "1.0",
+    "fpga_part": "xc7z020-clg400-1",
+    "target_clk_period": "8.00",
+    "axi4lite_interface": {
+        "name": "s_axi_control",
+        "clock_domain": "s_axi_aclk",
+        "reserved_addresses": 4,
+        "reset": "s_axi_areset_n"
+    },
+    "clocks": [
+        {
+            "name": "stream_clk",
+            "prefix": "r"
+        },
+        {
+            "name": "s_axi_aclk",
+            "prefix": "l"
+        }
+    ],
+    "registers": [
+        {
+            "comment": ["all registers should be placed in ascending order of address in the register file and",
+                        "start with base address [axi4lite_interface][reserved_addresses] * sizeof(u32)"],
+            "name": "Control",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "Enable",
+                    "high_bit": 0,
+                    "low_bit": 0,
+                    "clock_domain": "stream_clk"
+                },
+                {
+                    "name": "Freerun",
+                    "high_bit": 1,
+                    "low_bit": 1,
+                    "clock_domain": "stream_clk"
+                },
+                {
+                    "name": "GeneratorSelect",
+                    "high_bit": 2,
+                    "low_bit": 2,
+                    "clock_domain": "stream_clk"
+                }
+            ]
+        }
+    ]
+}
