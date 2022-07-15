@@ -1,12 +1,12 @@
 {
     "vendor": "digilent.com",
-    "ip_name": "TestAxiStreamSource",
-    "underscore_name": "TEST_AXI_STREAM_SOURCE",
+    "ip_name": "ManualTrigger",
+    "underscore_name": "MANUAL_TRIGGER",
     "version": "1.0",
     "fpga_part": "xc7z020-clg400-1",
     "target_clk_period": "8.00",
     "axi4lite_interface": {
-        "name": "S_AXI",
+        "name": "s_axi_control",
         "clock_domain": "s_axi_aclk",
         "reserved_addresses": 4,
         "reset": "s_axi_areset_n"
@@ -25,23 +25,11 @@
         {
             "comment": ["all registers should be placed in ascending order of address in the register file and",
                         "start with base address [axi4lite_interface][reserved_addresses] * sizeof(u32)"],
-            "name": "control",
+            "name": "Trigger",
             "access_type": "rw",
             "bitfields": [
                 {
-                    "name": "Start",
-                    "high_bit": 0,
-                    "low_bit": 0,
-                    "clock_domain": "stream_clk"
-                }
-            ]
-        },
-        {
-            "name": "status",
-            "access_type": "ro",
-            "bitfields": [
-                {
-                    "name": "Idle",
+                    "name": "Trigger",
                     "high_bit": 0,
                     "low_bit": 0,
                     "clock_domain": "stream_clk"
