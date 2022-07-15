@@ -218,6 +218,7 @@ ${hls_module}_inst: ${hls_module} port map(
 %   set clock [dict get $clock_domain name] 
 %   if {$clock == [dict get ${interface} clock_domain]} {
 [get_prefix $specdata ${clock}]Rst_n <= [dict get ${interface} reset];
+[get_prefix $specdata ${clock}]Rst <= not [dict get ${interface} reset];
 
 %   } else {
 
