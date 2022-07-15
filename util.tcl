@@ -63,19 +63,19 @@ proc get_register_addresses {specdata} {
     lappend address_info $newreg
 
     set newreg [dict create]
-    dict set newreg name global_interrupt_enable
+    dict set newreg name gie
     dict set newreg width 0x4
     dict set newreg offset 0x4
     lappend address_info $newreg
 
     set newreg [dict create]
-    dict set newreg name ip_interrupt_enable
+    dict set newreg name ip_intr_en
     dict set newreg width 0x4
     dict set newreg offset 0x8
     lappend address_info $newreg
 
     set newreg [dict create]
-    dict set newreg name ip_interrupt_status
+    dict set newreg name ip_intr_sts
     dict set newreg width 0x4
     dict set newreg offset 0xc
     lappend address_info $newreg

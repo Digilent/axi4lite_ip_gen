@@ -27,13 +27,13 @@
 #define [dict get $specdata underscore_name]_GIE_ENABLE_MASK 0x01
 
 /* IP interrupt enable register bitfields */
-#define [dict get $specdata underscore_name]_IP_INTR_EN_CHANNEL_0_MASK 0x1
-#define [dict get $specdata underscore_name]_IP_INTR_EN_CHANNEL_1_MASK 0x2
+#define [dict get $specdata underscore_name]_IP_INTR_EN_AP_DONE_MASK 0x1
+#define [dict get $specdata underscore_name]_IP_INTR_EN_AP_READY_MASK 0x2
 #define [dict get $specdata underscore_name]_IP_INTR_EN_ALL_MASK 0x3
 
 /* IP interrupt status register bitfields */
-#define [dict get $specdata underscore_name]_IP_INTR_STS_CHANNEL_0_MASK 0x1
-#define [dict get $specdata underscore_name]_IP_INTR_STS_CHANNEL_1_MASK 0x2
+#define [dict get $specdata underscore_name]_IP_INTR_STS_AP_DONE_MASK 0x1
+#define [dict get $specdata underscore_name]_IP_INTR_STS_AP_READY_MASK 0x2
 
 % foreach register [dict get $specdata registers] {
 %   set register_name [string toupper [dict get ${register} name]]
