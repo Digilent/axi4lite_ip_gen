@@ -1,9 +1,10 @@
-# ignore proj folder where the IP Packager projects are created when editing IPs
 proj
 ipx_proj
 out
 ws
 intermediates/*
-ip_repo
+!ip_repo
+ip_repo/**
+!ip_repo/vivado-library
 !**/.keep
 logs
