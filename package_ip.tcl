@@ -78,8 +78,16 @@ source [file join $script_dir write_xdc.tcl]
 ### wipe out existing files, generate new intermediates, and add them to the IP
 source [file join $script_dir write_driver_hw.tcl]
 
+# Wipe out unused stuff in example_designs folder
+foreach f [glob -directory ${ip_path}/example_designs */*] {file delete $f}
+foreach f [glob -directory ${ip_path}/example_designs *] {file delete $f}
+file delete ${ip_path}/example_designs
+
 # Wipe out existing HDL files and import generated ones
+set hdl_files [get_files -filter name=~${ip_path}/hdl/*]
 remove_files [get_files -filter name=~${ip_path}/hdl/*]
+foreach f $hdl_files {file delete $f}
+
 # file delete ${ip_path}/hdl
 if {[file exists ${ip_path}/src] == 0} {file mkdir ${ip_path}/src}
 
