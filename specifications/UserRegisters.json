@@ -1,0 +1,124 @@
+{
+    "vendor": "digilent.com",
+    "ip_name": "UserRegisters",
+    "underscore_name": "USER_REGISTERS",
+    "version": "1.0",
+    "fpga_part": "xc7z020-clg400-1",
+    "target_clk_period": "8.00",
+    "axi4lite_interface": {
+        "name": "s_axi_control",
+        "clock_domain": "s_axi_aclk",
+        "reserved_addresses": 4,
+        "reset": "s_axi_areset_n"
+    },
+    "clocks": [
+        {
+            "name": "io_clk",
+            "prefix": "r"
+        },
+        {
+            "name": "s_axi_aclk",
+            "prefix": "l"
+        }
+    ],
+    "registers": [
+        {
+            "comment": ["all registers should be placed in ascending order of address in the register file and",
+                        "start with base address [axi4lite_interface][reserved_addresses] * sizeof(u32)"],
+            "name": "Input0",
+            "access_type": "ro",
+            "bitfields": [
+                {
+                    "name": "Input0",
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "clock_domain": "io_clk"
+                }
+            ]
+        },
+        {
+            "name": "Input1",
+            "access_type": "ro",
+            "bitfields": [
+                {
+                    "name": "Input1",
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "clock_domain": "io_clk"
+                }
+            ]
+        },
+        {
+            "name": "Input2",
+            "access_type": "ro",
+            "bitfields": [
+                {
+                    "name": "Input2",
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "clock_domain": "io_clk"
+                }
+            ]
+        },
+        {
+            "name": "Input3",
+            "access_type": "ro",
+            "bitfields": [
+                {
+                    "name": "Input3",
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "clock_domain": "io_clk"
+                }
+            ]
+        },
+        {
+            "name": "Output0",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "Output0",
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "clock_domain": "io_clk"
+                }
+            ]
+        },
+        {
+            "name": "Output1",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "Output1",
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "clock_domain": "io_clk"
+                }
+            ]
+        },
+        {
+            "name": "Output2",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "Output2",
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "clock_domain": "io_clk"
+                }
+            ]
+        },
+        {
+            "name": "Output3",
+            "access_type": "rw",
+            "bitfields": [
+                {
+                    "name": "Output3",
+                    "high_bit": 31,
+                    "low_bit": 0,
+                    "clock_domain": "io_clk"
+                }
+            ]
+        },
+    ]
+}
