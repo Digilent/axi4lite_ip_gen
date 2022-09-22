@@ -71,6 +71,9 @@ set ip_path [file dirname $component_path]
 ## Write top-level HDL file
 source [file join $script_dir write_top_vhd.tcl]
 
+## Write AXI4-lite core
+source [file join $script_dir write_axi_lite_core.tcl]
+
 # Write CDC XDC file
 source [file join $script_dir write_xdc.tcl]
 
@@ -104,23 +107,53 @@ set_property model_name ${ip_name}_top [ipx::get_file_groups $sim_group]
 proc import_src_file {filepath to_group} {
     global ip_path
     set filename [file tail $filepath]
+
+    if {[file extension $filepath] == ".v"} {
+        set type verilogSource
+    } elseif {[file extension $filepath] == ".vhd"} {
+        set type vhdlSource
+    } else {
+        set type vhdlSource
+    }
+
     add_files -norecurse -copy_to ${ip_path}/src ${filepath}
     ipx::add_file ${ip_path}/src/${filename} [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
-    set_property type vhdlSource [ipx::get_files src/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
+    set_property type $type [ipx::get_files src/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
     set_property library_name xil_defaultlib [ipx::get_files src/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
 }
 
-foreach filepath [glob ${script_dir}/intermediates/${ip_name}/*.vhd] {
+# Import Generated VHDL
+foreach filepath [glob -nocomplain ${script_dir}/intermediates/${ip_name}/*.vhd] {
     import_src_file $filepath $synthesis_group
 }
 
-foreach filepath [glob ${script_dir}/src/*.vhd] {
+# Import Generated Verilog
+foreach filepath [glob -nocomplain ${script_dir}/intermediates/${ip_name}/*.v] {
+    import_src_file $filepath $synthesis_group
+}
+
+# Import Shared VHDL
+foreach filepath [glob -nocomplain ${script_dir}/src/*.vhd] {
+    import_src_file $filepath $synthesis_group
+}
+
+# Import Shared Verilog
+foreach filepath [glob -nocomplain ${script_dir}/src/*.v] {
     import_src_file $filepath $synthesis_group
 }
 
 import_src_file ${script_dir}/intermediates/${ip_name}/${ip_name}_cdc.xdc $synthesis_group
 
 set_property top ${ip_name}_top [current_fileset]
+
+# # Add stub PDF file and copy docx template into the IP's doc folder
+# set pg_pdf [open ${ip_path}/doc/${ip_name}.pdf w]
+# close $pg_pdf
+# if {[file exists ${ip_path}/doc] == 0} {file mkdir ${ip_path}/doc}
+# file copy ${templates_dir}/userguide_template.docx ${ip_path}/doc/${ip_name}.docx; # doesn't force an overwrite to avoid overwriting edits
+# ipx::add_file_group -type product_guide {} [ipx::current_core]
+# ipx::add_file ${ip_path}/doc/${ip_name}.pdf [ipx::get_file_groups xilinx_productguide -of_objects [ipx::current_core]]
+# set_property type pdf [ipx::get_files doc/${ip_name}.pdf -of_objects [ipx::get_file_groups xilinx_productguide -of_objects [ipx::current_core]]]
 
 # Add Customization Parameters
 

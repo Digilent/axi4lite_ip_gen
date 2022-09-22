@@ -52,7 +52,7 @@ port (
 end;
 
 architecture Behavioral of ${module_name}_top is
-component $hls_module is
+component ${module_name}_axilite is
 generic (
 
 % set addr_width [get_axi4lite_interface_addr_width $specdata]
@@ -174,11 +174,11 @@ signal ${domain_prefix}${signal_name}Int : ${signal_type};
 
 begin
 
---- Instantiate HLS register file core
+--- Instantiate register file core
 
-${hls_module}_inst: ${hls_module} port map(
-    ap_clk => [dict get $interface clock_domain],
-    ap_rst_n => [dict get $interface reset],
+${module_name}_axilite_inst: ${module_name}_axilite port map(
+    clk => [dict get $interface clock_domain],
+    reset => [dict get $interface reset],
 
 % set prefix [get_prefix $specdata [dict get $interface clock_domain]]
 % foreach {domain domain_ports} $ports_by_domain_and_direction {
@@ -192,23 +192,23 @@ ${hls_module}_inst: ${hls_module} port map(
 %   }
 % }
 % set interface_name [string tolower [dict get $interface name]]
-    ${interface_name}_AWVALID => [dict get $interface name]_AWVALID,
-    ${interface_name}_AWREADY => [dict get $interface name]_AWREADY,
-    ${interface_name}_AWADDR => [dict get $interface name]_AWADDR,
-    ${interface_name}_WVALID => [dict get $interface name]_WVALID,
-    ${interface_name}_WREADY => [dict get $interface name]_WREADY,
-    ${interface_name}_WDATA => [dict get $interface name]_WDATA,
-    ${interface_name}_WSTRB => [dict get $interface name]_WSTRB,
-    ${interface_name}_ARVALID => [dict get $interface name]_ARVALID,
-    ${interface_name}_ARREADY => [dict get $interface name]_ARREADY,
-    ${interface_name}_ARADDR => [dict get $interface name]_ARADDR,
-    ${interface_name}_RVALID => [dict get $interface name]_RVALID,
-    ${interface_name}_RREADY => [dict get $interface name]_RREADY,
-    ${interface_name}_RDATA => [dict get $interface name]_RDATA,
-    ${interface_name}_RRESP => [dict get $interface name]_RRESP,
-    ${interface_name}_BVALID => [dict get $interface name]_BVALID,
-    ${interface_name}_BREADY => [dict get $interface name]_BREADY,
-    ${interface_name}_BRESP => [dict get $interface name]_BRESP,
+    awvalid => [dict get $interface name]_AWVALID,
+    awready => [dict get $interface name]_AWREADY,
+    awaddr => [dict get $interface name]_AWADDR,
+    wvalid => [dict get $interface name]_WVALID,
+    wready => [dict get $interface name]_WREADY,
+    wdata => [dict get $interface name]_WDATA,
+    wstrb => [dict get $interface name]_WSTRB,
+    arvalid => [dict get $interface name]_ARVALID,
+    arready => [dict get $interface name]_ARREADY,
+    araddr => [dict get $interface name]_ARADDR,
+    rvalid => [dict get $interface name]_RVALID,
+    rready => [dict get $interface name]_RREADY,
+    rdata => [dict get $interface name]_RDATA,
+    rresp => [dict get $interface name]_RRESP,
+    bvalid => [dict get $interface name]_BVALID,
+    bready => [dict get $interface name]_BREADY,
+    bresp => [dict get $interface name]_BRESP,
     interrupt => ${prefix}Interrupt
 );
 

@@ -18,8 +18,8 @@ pushd $LOGDIR &> /dev/null
 [[ -d $INTERMEDIATES ]] && rm -rf $INTERMEDIATES/*
 [[ ! -d $INTERMEDIATES ]] && mkdir $INTERMEDIATES
 
-vitis_hls -f ../write_hls_ip.tcl $ARG1
-sh $INTERMEDIATES/unzip.sh
+# vitis_hls -f ../write_hls_ip.tcl $ARG1
+# sh $INTERMEDIATES/unzip.sh
 vivado -mode batch -source ../package_ip.tcl -notrace -tclargs $ARG1 $ARG2
 
 echo "Finished packaging IP -${FILENAME%.*}-"
