@@ -18,6 +18,8 @@ Use make_all.sh or make_ip.sh to generate IP from JSON files placed in the repo'
 
 Also, check out the "IP Drivers" section, below, for some more info on how to use the software drivers.
 
+Note that the ip_repo folder also contains the vivado-library repo, with many other Digilent IP. If this is not desired, you should change the output path arguments.
+
 ## Instructions
 - Download the source code for this repository, either by cloning it, or by downloading the source ZIP archive.
 - Create a new specification file in the specifications folder of the repo. The examples folder contains an example which covers most of the functionality implemented by the generator.
@@ -31,7 +33,7 @@ Also, check out the "IP Drivers" section, below, for some more info on how to us
   - Navigate to Project Settings -> IP -> Repository
   - Click the plus button, then navigate to the ip_repo folder and click Select
   - Click OK to confirm that your IP has been added to the project
-  - Click OK to confirm the Settingchanges
+  - Click OK to confirm the Settings changes
 - Use the IP in a Vivado design, connect it up to a processor by using Connection Automation, and connect it's ports to the outside world, either by making them external, or by manually wiring them to another IP or an RTL module.
 - Build your design, export an XSA file, and create a software application using it. See the "Software Drivers" section, below, for more information on how user software can access IP registers.
 
