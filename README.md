@@ -87,6 +87,29 @@ IssueApStart affects all user registers in the core, so calling it to send a new
 
 This basic API is provided through the XXX.h header and implemented in the corresponding .c file. Register offsets and bitfield masks are provided in the XXX_hw.h header. Both of these headers are provided to software applications through a hardware platform explorted from Vivado. Base addresses are provided through xparameters.h.
 
+The following snippet can be stepped through in the debugger to show that the ExampleIp, in the direct loopback configuration mentioned briefly above, works as intended:
+```
+#include "xparameters.h"
+#include "exampleip.h"
+#include "xil_printf.h"
+
+int main () {
+	u32 data_1 = 0, data_2 = 0;
+	ExampleIp inst;
+
+	xil_printf("entered main\r\n");
+	ExampleIp_Initialize(&inst, XPAR_EXAMPLEIP_0_S_AXI_CONTROL_BASEADDR);
+
+	ExampleIp_WriteReg(inst.BaseAddr, EXAMPLE_IP_CONTROL_REG_OFFSET, 0xffffffff);
+	ExampleIp_IssueApStart(&inst);
+	data_2 = ExampleIp_ReadReg(inst.BaseAddr, EXAMPLE_IP_CONTROL_REG_OFFSET);
+	ExampleIp_IssueApStart(&inst);
+	data_1 = ExampleIp_ReadReg(inst.BaseAddr, EXAMPLE_IP_STATUS_REG_OFFSET);
+
+	xil_printf("exit main %04x %04x\r\n", data_1, data_2);
+}
+```
+
 ## Known Issues and Potential Improvements
 - Vitis HLS and shell script dependencies could be removed by implementing a template for a fully custom AXI4Lite core. This would allow the generator to be run from within Vivado.
 - Access type specifications could be moved to the bitfield level instead of teh register level through the use of a custom core. The same goes for removing some of the restrictions on register addresses, and the requirement to use the ap_start mechanism to transfer data from registers to ports and vice versa.
