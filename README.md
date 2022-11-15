@@ -16,9 +16,11 @@ Use make_all.sh or make_ip.sh to generate IP from JSON files placed in the repo'
 
 `sh ./make_ip.sh ./specifications/ExampleIp.json ./ip_repo`
 
-Also, check out the "IP Drivers" section, below, for some more info on how to use the software drivers.
+Note that, if you cloned the repo, the ip_repo folder also contains the vivado-library repo as a submodule, with many other Digilent IP. If this is not desired, you should change the output path arguments.
 
-Note that the ip_repo folder also contains the vivado-library repo, with many other Digilent IP. If this is not desired, you should change the output path arguments.
+Additionally, some warnings and critical warnings are to be expected when running the scripts. These are generally ignorable. These scripts are still prototypes and these warnings should be documented to be ignorable or resolved before full release.
+
+Check out the "IP Drivers" section, below, for some more info on how to use the software drivers.
 
 ## Instructions
 - Download the source code for this repository, either by cloning it, or by downloading the source ZIP archive.
@@ -39,7 +41,7 @@ Note that the ip_repo folder also contains the vivado-library repo, with many ot
 
 If you're unfamiliar, see [Getting Started with Vivado and Vitis for Baremetal Software Projects](https://digilent.com/reference/programmable-logic/guides/getting-started-with-ipi) on Digilent Reference for a more detailed walkthrough of the basic process of creating a project.
 
-Note, a quick way to check that the generator is working correctly is to generate the ExampleIp in examples, and wire it up to a processor, and connect all of its output ports to its input ports.
+Note, a quick way to check that the generator is working correctly is to generate the ExampleIp in examples, and wire it up to a processor, and connect all of its output ports to its input ports. In this direct loopback configuration, it takes two IssueApStart calls to get data first from the registers to the output ports, and then from the input ports back to the registers.
 
 ## Specification Description
 This section details the structure of the  JSON specifications.
@@ -67,7 +69,7 @@ In general, string fields should not use TCL special characters like [, { and wh
     - clock_domain: The name of the clock that the port is synchronous with. User logic connected to this port should also be synchronous with this clock.
 
 ## Software Drivers
-The HLS core used introduces some properties of the register interface which you must be aware of when working with these software drivers. Before any read and after any write, an AP_START command must be issued to the HLS core, which will trigger the clock domain crossing mechanisms to transfer data from IP ports to the AXI interface's registers and vice versa. An "XXX_IssueApStart" function is provided in the drivers to accomplish this.
+The HLS core used introduces some properties of the register interface which you must be aware of when working with these software drivers. Before any read and after any write, an ApStart command must be issued to the HLS core, which will trigger the clock domain crossing mechanisms to transfer data from IP ports to the AXI interface's registers and vice versa. An "XXX_IssueApStart" function is provided in the drivers to accomplish this.
 
 A basic read would look like:
 ```
@@ -91,3 +93,4 @@ This basic API is provided through the XXX.h header and implemented in the corre
 - Multiple ports cannot currently share the same bitfield, or partially overlap their bitfields - modifying the generator to allow this in situations where only one bitfield sharing a bit provides read access to the host is possible. This would allow, for example, a read-only and a write-only port to share the same address.
 - The axi4lite core does not assert error conditions when invalid accesses are performed - for example, writing to a read-only register is ignored. Throwing errors could either be added as optional or default functionality. Also requires a custom core to replace the HLS core.
 - Some form of generated IP documentation would be useful
+- Only register-level access to the registers is provided in the driver API. Bitfield-level mask-and-set access might also be helpful.
