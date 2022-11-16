@@ -117,3 +117,4 @@ int main () {
 - The axi4lite core does not assert error conditions when invalid accesses are performed - for example, writing to a read-only register is ignored. Throwing errors could either be added as optional or default functionality. Also requires a custom core to replace the HLS core.
 - Some form of generated IP documentation would be useful
 - Only register-level access to the registers is provided in the driver API. Bitfield-level mask-and-set access might also be helpful.
+- Update CDC logic and constraints to conform to the latest recommendations in [vivado-library sources](https://github.com/Digilent/vivado-library/tree/master/module/synchronizers).
