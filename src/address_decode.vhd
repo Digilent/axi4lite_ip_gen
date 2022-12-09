@@ -5,9 +5,10 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity address_decode is
     Generic (
-        NUM_REGS : integer := 4);
+        NUM_REGS : integer := 4;
+        ADDR_WIDTH : integer := 4);
     Port (
-        address : in STD_LOGIC_VECTOR(positive(ceil(log2(real(NUM_REGS))))-1 downto 0);
+        address : in STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
         reg_en : out STD_LOGIC_VECTOR(NUM_REGS-1 downto 0));
 end address_decode;
 

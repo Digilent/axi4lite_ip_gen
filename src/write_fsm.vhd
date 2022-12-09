@@ -21,6 +21,8 @@ end write_fsm;
 architecture Behavioral of write_fsm is
     type STATE_TYPE is (s_await_address, s_await_data, s_await_resp);
     signal state : STATE_TYPE := s_await_address;
+    signal awready_internal : STD_LOGIC;
+    signal wready_internal : STD_LOGIC;
 begin
     process (clk)
     begin
@@ -30,19 +32,33 @@ begin
             else
                 case state is
                     when s_await_address =>
-                        state <= s_await_data when awvalid = '1' else state;
+                        if awvalid = '1' then
+                            state <= s_await_data;
+                        else
+                            state <= state;
+                        end if;
                     when s_await_data =>
-                        state <= s_await_resp when wvalid = '1' else state;
+                        if wvalid = '1' then
+                            state <= s_await_resp;
+                        else
+                            state <= state;
+                        end if;
                     when s_await_resp =>
-                        state <= s_await_address when bready = '1' else state;
+                    if bready = '1' then
+                        state <= s_await_address;
+                    else
+                        state <= state;
+                    end if;
                 end case;
             end if;
         end if;
     end process;
 
-    wready   <= '1' when state = s_await_data else '0';
-    awready  <= '1' when state = s_await_address else '0';
-    bvalid   <= '1' when state = s_await_resp else '0';
-    awreg_en <= awready;
-    wreg_en  <= wvalid and wready;
+    wready_internal  <= '1' when state = s_await_data else '0';
+    wready           <= wready_internal;
+    awready_internal <= '1' when state = s_await_address else '0';
+    awready          <= awready_internal;
+    bvalid           <= '1' when state = s_await_resp else '0';
+    awreg_en         <= awready_internal;
+    wreg_en          <= wvalid and wready_internal;
 end Behavioral;

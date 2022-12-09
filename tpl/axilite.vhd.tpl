@@ -42,7 +42,7 @@ port (
 % set registers [dict get $specdata registers]
 % for {set i 0} {$i < [llength $registers]} {incr i} {
 %   set register [lindex $registers $i]
-%   set type "STD_LOGIC_VECTOR(DATA_WIDTH downto 0)"
+%   set type "STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0)"
 %   set access [dict get $register access_type]
 %   if {${access} != "wo"} {
     Reg${i}_i : IN ${type};
@@ -127,20 +127,6 @@ port (
 );
 end component;
 
-component base_register is
-generic (
-    DATA_WIDTH : INTEGER := 1;
-    RESET_VALUE : INTEGER := 0
-);
-port (
-    clk : IN STD_LOGIC;
-    reset : IN STD_LOGIC;
-    en : IN STD_LOGIC;
-    data_i : IN STD_LOGIC_VECTOR (DATA_WIDTH-1 downto 0);
-    data_o : OUT STD_LOGIC_VECTOR (DATA_WIDTH-1 downto 0)
-);
-end component;
-
     constant RESP_OKAY : STD_LOGIC_VECTOR(1 downto 0) := "00";
     constant RESP_EXOKAY : STD_LOGIC_VECTOR(1 downto 0) := "01";
     constant RESP_SLVERR : STD_LOGIC_VECTOR(1 downto 0) := "10";
@@ -221,7 +207,8 @@ begin
 
     addr_decode_inst: address_decode
         generic map (
-            NUM_REGS => NUM_REGS
+            NUM_REGS => NUM_REGS,
+            ADDR_WIDTH => ADDR_WIDTH
         )
         port map (
             address => awreg,
@@ -231,7 +218,7 @@ begin
     -- Write address
     awbuffer: skid_buffer
         generic map (
-            DATA_WIDTH => DATA_WIDTH
+            DATA_WIDTH => ADDR_WIDTH
         )
         port map (
             clk    => clk,
@@ -244,18 +231,18 @@ begin
             bdata  => awaddr_int
         );
 
-    awreg_inst: base_register
-        generic map (
-            DATA_WIDTH => ADDR_WIDTH,
-            RESET_VALUE => 0
-        )
-        port map (
-            clk    => clk,
-            reset  => reset,
-            en     => awreg_en,
-            data_i => awaddr_int,
-            data_o => awreg
-        );
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '1' then
+                awreg <= (others => '0');
+            elsif awreg_en = '1' then
+                awreg <= awaddr_int;
+            else
+                awreg <= awreg;
+            end if;
+        end if;
+    end process;
     
     -- Read address register
     -- skid buffer may not be necessary if master can be guaranteed to never send two read address beats in subsequent cycles,
@@ -263,7 +250,7 @@ begin
     -- without further research, its inclusion guarantees that address will not be dropped
     arbuffer: skid_buffer
         generic map (
-            DATA_WIDTH => DATA_WIDTH
+            DATA_WIDTH => ADDR_WIDTH
         )
         port map (
             clk    => clk,
@@ -276,18 +263,18 @@ begin
             bdata  => araddr_int
         );
 
-    arreg_inst: base_register
-        generic map (
-            DATA_WIDTH => ADDR_WIDTH,
-            RESET_VALUE => 0
-        )
-        port map (
-            clk    => clk,
-            reset  => reset,
-            en     => arreg_en,
-            data_i => araddr_int,
-            data_o => arreg
-        );
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '1' then
+                arreg <= (others => '0');
+            elsif arreg_en = '1' then
+                arreg <= araddr_int;
+            else
+                arreg <= arreg;
+            end if;
+        end if;
+    end process;
     
     -- Read data mux
     -- read data is not skid-buffered because the two-cycle loop time of the control logic guarantees that data will never be updated on two consecutive cycles

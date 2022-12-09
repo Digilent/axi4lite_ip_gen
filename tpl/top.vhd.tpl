@@ -25,8 +25,14 @@ port (
 %     } else {
 %       set io_direction OUT
 %     }
+%     set port_high_bit [expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit]]
 %     set bitfield_name ${prefix}[dict get $bitfield name]
-    ${bitfield_name} : $io_direction STD_LOGIC_VECTOR ([expr [dict get $bitfield high_bit] - [dict get $bitfield low_bit]] downto 0);
+%     if {${port_high_bit} == 0} {
+%       set type "STD_LOGIC"
+%     } else {
+%       set type "STD_LOGIC_VECTOR (${port_high_bit} downto 0)"
+%     }
+    ${bitfield_name} : ${io_direction} ${type};
 
 %   }
 % }
@@ -84,7 +90,7 @@ port (
 % for {set i 0} {$i < [llength $registers]} {incr i} {
 %   set register [lindex $registers $i]
 %   set name "Reg${i}"
-%   set type "STD_LOGIC_VECTOR(DATA_WIDTH downto 0)"
+%   set type "STD_LOGIC_VECTOR(C_[string toupper [dict get $interface name]]_DATA_WIDTH-1 downto 0)"
 %   if {[dict get $register access_type] != "wo"} {
     ${name}_i : IN ${type};
 
@@ -164,8 +170,8 @@ signal [get_prefix $specdata [dict get ${clock_domain} name]]Rst : STD_LOGIC;
 %   set access [dict get ${register} access_type]
 %   set clock_domain [dict get ${register} clock_domain]
 %   set clock_prefix [get_prefix $specdata ${clock_domain}]
-signal ${clock_prefix}Reg${i} : STD_LOGIC_VECTOR(C_[string toupper [dict get $interface name]]_DATA_WIDTH downto 0);
-signal ${axi_clk_prefix}Reg${i} : STD_LOGIC_VECTOR(C_[string toupper [dict get $interface name]]_DATA_WIDTH downto 0);
+signal ${clock_prefix}Reg${i} : STD_LOGIC_VECTOR(C_[string toupper [dict get $interface name]]_DATA_WIDTH-1 downto 0);
+signal ${axi_clk_prefix}Reg${i} : STD_LOGIC_VECTOR(C_[string toupper [dict get $interface name]]_DATA_WIDTH-1 downto 0);
 
 % }
 
