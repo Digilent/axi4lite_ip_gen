@@ -1,7 +1,8 @@
 library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+use ieee.std_logic_1164.all;
 use ieee.math_real.log2;
 use ieee.math_real.ceil;
+use ieee.numeric_std.all;
 
 entity ${module_name}_axilite is
 generic (
@@ -35,30 +36,28 @@ port (
     rvalid : OUT STD_LOGIC;
     rready : IN STD_LOGIC;
 
+-- Each register gets an input port if read is allowed and an output port if write is allowed
+-- This core is bitfield agnostic
+
 % set registers [dict get $specdata registers]
-% for {set register_index 0} {$register_index < [llength $registers]} {incr register_index} {
-% set register [lindex $registers $register_index]
-%   set bitfields [dict get $register bitfields]
-%   for {set bitfield_index 0} {$bitfield_index < [llength $bitfields]} {incr bitfield_index} {
-%     set bitfield [lindex $bitfields $bitfield_index]
-%     set high_bit [expr [dict get ${bitfield} width]-1]
-%     set name [dict get ${bitfield} name]
-%     if {[dict get $bitfield access_type] != "wo"} {
-    ${name}_i : IN STD_LOGIC_VECTOR(${high_bit} downto 0),
+% for {set i 0} {$i < [llength $registers]} {incr i} {
+%   set register [lindex $registers $i]
+%   set type "STD_LOGIC_VECTOR(DATA_WIDTH downto 0)"
+%   set access [dict get $register access_type]
+%   if {${access} != "wo"} {
+    Reg${i}_i : IN ${type};
 
-%     }
-%     if {[dict get $bitfield access_type] != "ro"} {
-    ${name}_o : OUT STD_LOGIC_VECTOR(${high_bit} downto 0),
+%   }
+%   if {${access} != "ro"} {
+    Reg${i}_o : OUT ${type};
 
-%     }
 %   }
 % }
-
     interrupt: OUT STD_LOGIC
     );
 end;
 
-architecture Behavioral of ${module_name}_top is
+architecture Behavioral of ${module_name}_axilite is
 component write_fsm is
 port (
     clk : IN STD_LOGIC;
@@ -88,10 +87,11 @@ end component;
 
 component address_decode is
 generic (
+    ADDR_WIDTH : INTEGER := 2;
     NUM_REGS : INTEGER := 4
 );
 port (
-    address : IN STD_LOGIC_VECTOR(integer(ceil(log2(1.0*(NUM_REGS-1))))-1 downto 0);
+    address : IN STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
     reg_en : OUT STD_LOGIC_VECTOR(NUM_REGS-1 downto 0)
 );
 end component;
@@ -127,10 +127,30 @@ port (
 );
 end component;
 
+component base_register is
+generic (
+    DATA_WIDTH : INTEGER := 1;
+    RESET_VALUE : INTEGER := 0
+);
+port (
+    clk : IN STD_LOGIC;
+    reset : IN STD_LOGIC;
+    en : IN STD_LOGIC;
+    data_i : IN STD_LOGIC_VECTOR (DATA_WIDTH-1 downto 0);
+    data_o : OUT STD_LOGIC_VECTOR (DATA_WIDTH-1 downto 0)
+);
+end component;
+
     constant RESP_OKAY : STD_LOGIC_VECTOR(1 downto 0) := "00";
     constant RESP_EXOKAY : STD_LOGIC_VECTOR(1 downto 0) := "01";
     constant RESP_SLVERR : STD_LOGIC_VECTOR(1 downto 0) := "10";
     constant RESP_DECERR : STD_LOGIC_VECTOR(1 downto 0) := "11";
+
+% set registers [dict get $specdata registers]
+% for {set i 0} {$i < [llength $registers]} {incr i} {
+    constant ADDR_REG${i} : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0) := std_logic_vector(to_unsigned(${i}, ADDR_WIDTH)); -- 
+
+% }
 
     signal awreg : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
     signal arreg : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
@@ -143,26 +163,25 @@ end component;
 
     signal arready_int : STD_LOGIC;
     signal arvalid_int : STD_LOGIC;
-    signal araddr_int : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
-    signal rdata_int : STD_LOGIC;
+    signal araddr_int : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
+    signal rdata_int : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
     
     signal awready_int : STD_LOGIC;
     signal awvalid_int : STD_LOGIC;
-    signal awaddr_int : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+    signal awaddr_int : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
 
 % set registers [dict get $specdata registers]
-% for {set register_index 0} {$register_index < [llength $registers]} {incr register_index} {
-% set register [lindex $registers $register_index]
-%   set bitfields [dict get $register bitfields]
-    signal reg${register_index}_i : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
-    signal reg${register_index}_o : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+% for {set i 0} {$i < [llength $registers]} {incr i} {
+%   set register [lindex $registers $i]
+    signal reg${i}_enable : STD_LOGIC;
 
-%   for {set bitfield_index 0} {$bitfield_index < [llength $bitfields]} {incr bitfield_index} {
-%     set bitfield [lindex $bitfields $bitfield_index]
-%     set high_bit [expr [dict get ${bitfield} width]-1]
-%     set name [dict get ${bitfield} name]
-%     if {[dict get $bitfield access_type] != "wo"} {
-    signal ${name}_int : STD_LOGIC_VECTOR(${high_bit} downto 0);
+%   set access [dict get $register access_type]
+%   if {${access} == "wo"} {
+    signal Reg${i}_i : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+
+%   }
+%   if {${access} != "ro"} {
+    signal Reg${i}_int : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
 
 %   }
 % }
@@ -228,7 +247,7 @@ begin
     awreg_inst: base_register
         generic map (
             DATA_WIDTH => ADDR_WIDTH,
-            RESET_VALUE => (others => '0')
+            RESET_VALUE => 0
         )
         port map (
             clk    => clk,
@@ -260,7 +279,7 @@ begin
     arreg_inst: base_register
         generic map (
             DATA_WIDTH => ADDR_WIDTH,
-            RESET_VALUE => (others => '0')
+            RESET_VALUE => 0
         )
         port map (
             clk    => clk,
@@ -274,53 +293,52 @@ begin
     -- read data is not skid-buffered because the two-cycle loop time of the control logic guarantees that data will never be updated on two consecutive cycles
     rdata <= rdata_int;
     
-    rdata_mux: process(all)
+% set sensitivity [list]
+% lappend sensitivity arreg
+% for {set i 0} {$i < [llength [dict get $specdata registers]]} {incr i} {
+%   lappend sensitivity Reg${i}_i
+% }
+
+    rdata_mux: process([join ${sensitivity} ", "])
     begin
         case arreg is
-% for {set i 0} {$i < [llength [dict get $specdata registers]]} {incr i} {
-            when ${i}: => rdata_int <= reg${i}_i;
 
-%   }
+% for {set i 0} {$i < [llength [dict get $specdata registers]]} {incr i} {
+            when ADDR_REG${i} => rdata_int <= Reg${i}_i;
+
 % }
             when others => rdata_int <= (others => '0');
         end case;
     end process rdata_mux;
     
     -- Individual registers
+
 % set registers [dict get $specdata registers]
 % for {set i 0} {$i < [llength $registers]} {incr i} {
 %   set register [lindex $registers $i]
+%   set access_type [dict get $register access_type]
+%   if {$access_type != "ro"} {
     -- Register ${i} instantiation
-
-    reg${i}_inst: axi4lite_register
+    reg${i}_enable <= reg_en(${i}) and wreg_en;
+    Reg${i}_inst: axi4lite_register
         generic map (
             DATA_WIDTH => DATA_WIDTH,
-            RESET_VALUE => (others => '0')
+            RESET_VALUE => 0
         )
         port map (
             clk      => clk,
             reset    => reset,
-            enable   => reg_en(${i}) and wreg_en,
+            enable   => reg${i}_enable,
             wstrb    => wstrb,
             data_in  => wdata,
-            data_out => reg${i}_o
+            data_out => Reg${i}_int
         );
+    Reg${i}_o <= Reg${i}_int;
+    Reg${i}_i <= Reg${i}_int;
 
-    -- Register ${i} bitfield mapping
-%   for {set bitfield_index 0} {$bitfield_index < [llength $bitfields]} {incr bitfield_index} {
-%     set bitfield [lindex $bitfields $bitfield_index]
-%     set width [dict get ${bitfield} width]
-%     set high [dict get ${bitfield} high_bit]
-%     set low [dict get ${bitfield} low_bit]
-%     set name [dict get ${bitfield} name]
-%     if {[dict get $bitfield access_type] != "wo"} {
-    reg${i}_i[${high}:${low}] <= ${name}_int;
+%   } elseif {${access_type} == "wo"} {
+    Reg${i}_i <= Reg${i}_o; -- Loop back on write-only registers
 
-%     }
-%     if {[dict get $bitfield access_type] != "ro"} {
-    ${name}_int <= reg${i}_o[${high}:${low}];
-
-%     }
 %   }
 % }
 

@@ -55,36 +55,19 @@ proc get_hls_portname {bitfield_name} {
 
 proc get_register_addresses {specdata} {
     set address_info [list]
+    set offset 0x0
+    set width 4
 
     set newreg [dict create]
-    dict set newreg name ap_ctrl
+    dict set newreg name sync
     dict set newreg width 0x4
-    dict set newreg offset 0x0
+    dict set newreg offset $offset
+    set offset [format 0x%x [expr $offset + $width]]
     lappend address_info $newreg
 
-    set newreg [dict create]
-    dict set newreg name gie
-    dict set newreg width 0x4
-    dict set newreg offset 0x4
-    lappend address_info $newreg
-
-    set newreg [dict create]
-    dict set newreg name ip_intr_en
-    dict set newreg width 0x4
-    dict set newreg offset 0x8
-    lappend address_info $newreg
-
-    set newreg [dict create]
-    dict set newreg name ip_intr_sts
-    dict set newreg width 0x4
-    dict set newreg offset 0xc
-    lappend address_info $newreg
-
-    set offset 0x10
     foreach register [dict get $specdata registers] {
         set newreg [dict create]
         dict set newreg name [dict get $register name]
-        set width 8
         dict set newreg width $width
         dict set newreg offset $offset
         set offset [format 0x%x [expr $offset + $width]]

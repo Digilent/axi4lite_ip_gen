@@ -4,7 +4,7 @@
 set script_dir [file dirname [file normalize [info script]]]
 source ${script_dir}/util.tcl
 
-set tplfile_path ${script_dir}/tpl/axi_lite.vhd.tpl
+set tplfile_path ${script_dir}/tpl/axilite.vhd.tpl
 
 #script has no calling context, so set up data for testing
 package require json
@@ -17,6 +17,8 @@ set specdata [::json::json2dict $specdata_json]
 
 set ip_name [dict get $specdata ip_name]
 set outfile_path ${script_dir}/intermediates/${ip_name}/${ip_name}_axilite.vhd
+
+puts "using template [file tail $tplfile_path] to create $outfile_path"
 
 # set up vars if necessary
 set modified_specdata $specdata

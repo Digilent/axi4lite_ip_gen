@@ -10,6 +10,5 @@ Use make_all.sh or make_ip.sh to generate IP from JSON files placed in the repo'
 
 ## Dependencies
 - Vivado (tested with 2021.1) installation with bin folder on path
-- Vitis HLS (tested with 2021.1) installation with bin folder on path
 - Bash-compatible shell - Git for Windows includes Git Bash
   - unzip command; see https://stackoverflow.com/a/49355978 for Windows

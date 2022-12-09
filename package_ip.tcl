@@ -92,7 +92,7 @@ remove_files [get_files -filter name=~${ip_path}/hdl/*]
 foreach f $hdl_files {file delete $f}
 
 # file delete ${ip_path}/hdl
-if {[file exists ${ip_path}/src] == 0} {file mkdir ${ip_path}/src}
+if {[file exists ${ip_path}/hdl] == 0} {file mkdir ${ip_path}/hdl}
 
 # Switch file groups to be language-agnostic
 ipx::remove_file_group xilinx_verilogsynthesis [ipx::current_core]
@@ -116,10 +116,10 @@ proc import_src_file {filepath to_group} {
         set type vhdlSource
     }
 
-    add_files -norecurse -copy_to ${ip_path}/src ${filepath}
-    ipx::add_file ${ip_path}/src/${filename} [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
-    set_property type $type [ipx::get_files src/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
-    set_property library_name xil_defaultlib [ipx::get_files src/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
+    add_files -norecurse -copy_to ${ip_path}/hdl ${filepath}
+    ipx::add_file ${ip_path}/hdl/${filename} [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]
+    set_property type $type [ipx::get_files hdl/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
+    set_property library_name xil_defaultlib [ipx::get_files hdl/${filename} -of_objects [ipx::get_file_groups $to_group -of_objects [ipx::current_core]]]
 }
 
 # Import Generated VHDL
@@ -179,8 +179,8 @@ set_property physical_name [dict get $interface reset] [ipx::get_port_maps RST -
 
 ## set default drive level of all ports to 0 (FIXME)
 foreach register [dict get $specdata registers] {
+    set prefix [get_prefix $specdata [dict get $register clock_domain]]
 	foreach bitfield [dict get $register bitfields] {
-		set prefix [get_prefix $specdata [dict get $bitfield clock_domain]]
         set ip_port [ipx::get_ports ${prefix}[dict get $bitfield name] -of_objects [ipx::current_core]]
 		set_property driver_value 0 $ip_port
 	}
