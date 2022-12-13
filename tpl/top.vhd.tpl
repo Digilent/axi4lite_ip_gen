@@ -180,7 +180,7 @@ begin
 --- Instantiate register file core
 ${module_name}_axilite_inst: ${module_name}_axilite port map(
     clk => [dict get $interface clock_domain],
-    reset => [dict get $interface reset],
+    reset => ${axi_clk_prefix}Rst,
 
 % set prefix [get_prefix $specdata [dict get $interface clock_domain]]
 % set registers [dict get $specdata registers]
@@ -271,6 +271,10 @@ port map(
     aoReset => ${axi_clk_prefix}Rst
 );
 
+%     set unused_bits [dict create]; # set up a dict to look up which bits are used by bitfields and which arent
+%     for {set bit_i 0} {$bit_i < 32} {incr bit_i} {
+%       dict set unused_bits $bit_i 1
+%     }
 %     set bitfields [dict get ${register} bitfields]
 %     foreach bitfield $bitfields {
 %       set bitfield_name [dict get $bitfield name]
@@ -282,6 +286,16 @@ ${clock_prefix}Reg${i}(${bitfield_high} downto ${bitfield_low}) <= ${clock_prefi
 
 %       } else {
 ${clock_prefix}Reg${i}(${bitfield_low}) <= ${clock_prefix}${bitfield_name};
+
+%       }
+%       for {set bit_i $bitfield_low} {$bit_i <= $bitfield_high} {incr bit_i} {
+%         dict set unused_bits $bit_i 0; # bit is used; clear its dict entry
+%       }
+%     }
+%     foreach {bit unused} $unused_bits {
+%       if {$unused} {
+%          # potential improvement, look ahead and use downto ranges
+${clock_prefix}Reg${i}(${bit}) <= '0';
 
 %       }
 %     }

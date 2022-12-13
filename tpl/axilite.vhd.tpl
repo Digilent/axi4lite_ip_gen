@@ -115,7 +115,7 @@ end component;
 component axi4lite_register is
 generic (
     DATA_WIDTH : INTEGER := 32;
-    RESET_VALUE : INTEGER := 0
+    RESET_VALUE : STD_LOGIC_VECTOR(31 downto 0) := (others => '0')
 );
 port (
     clk : IN STD_LOGIC;
@@ -132,14 +132,9 @@ end component;
     constant RESP_SLVERR : STD_LOGIC_VECTOR(1 downto 0) := "10";
     constant RESP_DECERR : STD_LOGIC_VECTOR(1 downto 0) := "11";
 
-% set registers [dict get $specdata registers]
-% for {set i 0} {$i < [llength $registers]} {incr i} {
-    constant ADDR_REG${i} : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0) := std_logic_vector(to_unsigned(${i}, ADDR_WIDTH)); -- 
-
-% }
-
     signal awreg : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
     signal arreg : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
+    signal arreg_word : STD_LOGIC_VECTOR(ADDR_WIDTH-3 downto 0);
 
     signal awreg_en : STD_LOGIC;
     signal wreg_en : STD_LOGIC;
@@ -184,8 +179,8 @@ begin
         port map (
             clk      => clk,
             reset    => reset,
-            awvalid  => awvalid,
-            awready  => awready,
+            awvalid  => awvalid_int,
+            awready  => awready_int,
             wvalid   => wvalid,
             wready   => wready,
             bvalid   => bvalid,
@@ -198,8 +193,8 @@ begin
         port map (
             clk      => clk,
             reset    => reset,
-            arvalid  => arvalid,
-            arready  => arready,
+            arvalid  => arvalid_int,
+            arready  => arready_int,
             rvalid   => rvalid,
             rready   => rready,
             arreg_en => arreg_en
@@ -276,26 +271,35 @@ begin
         end if;
     end process;
     
+    arreg_word <= arreg(arreg'length-1 downto 2);
+
     -- Read data mux
     -- read data is not skid-buffered because the two-cycle loop time of the control logic guarantees that data will never be updated on two consecutive cycles
     rdata <= rdata_int;
     
 % set sensitivity [list]
-% lappend sensitivity arreg
+% lappend sensitivity arreg_word
 % for {set i 0} {$i < [llength [dict get $specdata registers]]} {incr i} {
 %   lappend sensitivity Reg${i}_i
 % }
 
     rdata_mux: process([join ${sensitivity} ", "])
     begin
-        case arreg is
 
+% set first "if"
 % for {set i 0} {$i < [llength [dict get $specdata registers]]} {incr i} {
-            when ADDR_REG${i} => rdata_int <= Reg${i}_i;
+%   if {${addr_width} == 2} {
+%     1-reg core not supported
+%   } else {
+        ${first} arreg_word = std_logic_vector(to_unsigned(${i}, arreg_word'length)) then
+            rdata_int <= Reg${i}_i;
 
+%   }
+%   set first "elsif"
 % }
-            when others => rdata_int <= (others => '0');
-        end case;
+        else
+            rdata_int <= (others => '0');
+        end if;
     end process rdata_mux;
     
     -- Individual registers
@@ -310,7 +314,7 @@ begin
     Reg${i}_inst: axi4lite_register
         generic map (
             DATA_WIDTH => DATA_WIDTH,
-            RESET_VALUE => 0
+            RESET_VALUE => std_logic_vector(to_unsigned(0, DATA_WIDTH))
         )
         port map (
             clk      => clk,
@@ -328,5 +332,20 @@ begin
 
 %   }
 % }
+
+-- Fire interrupt on a one cycle delay after write strobes, matching wdata to reg port latency
+-- No masking of spurious strobes (like for a write to a RO register) is currently done
+process (clk)
+begin
+    if rising_edge(clk) then
+        if reset = '1' then
+            interrupt <= '0';
+        elsif wreg_en = '1' then
+            interrupt <= '1';
+        else
+            interrupt <= '0';
+        end if;
+    end if;
+end process;
 
 end Behavioral;
