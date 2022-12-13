@@ -8,7 +8,6 @@
     "axi4lite_interface": {
         "name": "s_axi_control",
         "clock_domain": "s_axi_aclk",
-        "reserved_addresses": 4,
         "reset": "s_axi_areset_n"
     },
     "clocks": [

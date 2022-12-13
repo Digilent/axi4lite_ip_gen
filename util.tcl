@@ -58,12 +58,12 @@ proc get_register_addresses {specdata} {
     set offset 0x0
     set width 4
 
-    set newreg [dict create]
-    dict set newreg name sync
-    dict set newreg width 0x4
-    dict set newreg offset $offset
-    set offset [format 0x%x [expr $offset + $width]]
-    lappend address_info $newreg
+    # set newreg [dict create]
+    # dict set newreg name sync
+    # dict set newreg width 0x4
+    # dict set newreg offset $offset
+    # set offset [format 0x%x [expr $offset + $width]]
+    # lappend address_info $newreg
 
     foreach register [dict get $specdata registers] {
         set newreg [dict create]
@@ -90,10 +90,7 @@ proc find_register_offset_by_name {return_var address_info register_name} {
 }
 
 proc get_num_words_in_address_space {specdata} {
-    set interface [dict get $specdata axi4lite_interface]
-    set reserved_addresses [dict get $interface reserved_addresses]
-    set num_regs [llength [dict get $specdata registers]]
-    return [expr $reserved_addresses + ($num_regs * 2)]
+    return [llength [dict get $specdata registers]]
 }
 
 proc get_axi4lite_interface_addr_width {specdata} {

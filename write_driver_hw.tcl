@@ -26,13 +26,12 @@ foreach subdir {src data} {
 
 set sources [list]
 
-set newsource [dict create]
-set hwheader_path ${intermediate_sw_dir}/${driver_name}/src/${ip_name}_hw.h; # used by driver.h.tpl
-dict set newsource filepath $hwheader_path
-dict set newsource template ${script_dir}/tpl/driver_hw.h.tpl
-dict set newsource template_type "tpl"
-lappend sources $newsource
-
+# set newsource [dict create]
+# set hwheader_path ${intermediate_sw_dir}/${driver_name}/src/${ip_name}_hw.h; # used by driver.h.tpl
+# dict set newsource filepath $hwheader_path
+# dict set newsource template ${script_dir}/tpl/driver_hw.h.tpl
+# dict set newsource template_type "tpl"
+# lappend sources $newsource
 
 set newsource [dict create]
 dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/Makefile
@@ -40,11 +39,11 @@ dict set newsource template ${script_dir}/tpl/Makefile.tpl
 dict set newsource template_type "xmlish"
 lappend sources $newsource
 
-set newsource [dict create]
-dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/${ip_name}.c
-dict set newsource template ${script_dir}/tpl/driver.c.tpl
-dict set newsource template_type "tpl"
-lappend sources $newsource
+# set newsource [dict create]
+# dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/${ip_name}.c
+# dict set newsource template ${script_dir}/tpl/driver.c.tpl
+# dict set newsource template_type "tpl"
+# lappend sources $newsource
 
 set newsource [dict create]
 dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/${ip_name}.h
