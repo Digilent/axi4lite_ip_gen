@@ -171,8 +171,11 @@ signal [get_prefix $specdata [dict get ${clock_domain} name]]Rst : STD_LOGIC;
 %   set clock_domain [dict get ${register} clock_domain]
 %   set clock_prefix [get_prefix $specdata ${clock_domain}]
 signal ${clock_prefix}Reg${i} : STD_LOGIC_VECTOR(C_[string toupper [dict get $interface name]]_DATA_WIDTH-1 downto 0);
+
+%   if {${axi_clk_prefix} != ${clock_prefix}} {
 signal ${axi_clk_prefix}Reg${i} : STD_LOGIC_VECTOR(C_[string toupper [dict get $interface name]]_DATA_WIDTH-1 downto 0);
 
+%   }
 % }
 
 begin
@@ -256,6 +259,8 @@ port map (
 
 ---- Register $i input path
 ---- trigger handshake push on any difference in the input bus
+
+%     if {${clock_domain} != ${axi_clk}} {
 reg${i}_from_${clock_domain}_to_${axi_clk}_InstHandshake: ChangeDetectHandshake 
 generic map (
     kDataWidth => C_[string toupper [dict get $interface name]]_DATA_WIDTH
@@ -271,6 +276,7 @@ port map(
     aoReset => ${axi_clk_prefix}Rst
 );
 
+%     }
 %     set unused_bits [dict create]; # set up a dict to look up which bits are used by bitfields and which arent
 %     for {set bit_i 0} {$bit_i < 32} {incr bit_i} {
 %       dict set unused_bits $bit_i 1
@@ -303,6 +309,8 @@ ${clock_prefix}Reg${i}(${bit}) <= '0';
 %   if {$access != "ro"} {
 
 ---- Register $i output path
+
+%     if {${axi_clk} != ${clock_domain}} {
 ---- trigger handshake on interrupt
 reg${i}_from_${axi_clk}_to_${clock_domain}_InstHandshake: HandshakeData 
 generic map (
@@ -321,6 +329,7 @@ port map(
     aoReset => ${clock_prefix}Rst
 );
 
+%     }
 %     set bitfields [dict get ${register} bitfields]
 %     foreach bitfield $bitfields {
 %       set bitfield_name [dict get $bitfield name]
