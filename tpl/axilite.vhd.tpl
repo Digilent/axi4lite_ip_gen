@@ -154,8 +154,6 @@ end component;
 % set registers [dict get $specdata registers]
 % for {set i 0} {$i < [llength $registers]} {incr i} {
 %   set register [lindex $registers $i]
-    signal reg${i}_enable : STD_LOGIC;
-
 %   set access [dict get $register access_type]
 %   if {${access} == "wo"} {
     signal Reg${i}_i : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
@@ -163,6 +161,7 @@ end component;
 %   }
 %   if {${access} != "ro"} {
     signal Reg${i}_int : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+    signal reg${i}_enable : STD_LOGIC;
 
 %   }
 % }
@@ -308,7 +307,7 @@ begin
 % for {set i 0} {$i < [llength $registers]} {incr i} {
 %   set register [lindex $registers $i]
 %   set access_type [dict get $register access_type]
-%   if {$access_type != "ro"} {
+%   if {$access_type == "rw" || $access_type == "wo"} {
     -- Register ${i} instantiation
     reg${i}_enable <= reg_en(${i}) and wreg_en;
     Reg${i}_inst: axi4lite_register
@@ -325,11 +324,12 @@ begin
             data_out => Reg${i}_int
         );
     Reg${i}_o <= Reg${i}_int;
+
+%     if {${access} == "wo"} {
+    -- No input port, output back to the input
     Reg${i}_i <= Reg${i}_int;
 
-%   } elseif {${access_type} == "wo"} {
-    Reg${i}_i <= Reg${i}_o; -- Loop back on write-only registers
-
+%     }
 %   }
 % }
 
