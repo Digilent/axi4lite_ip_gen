@@ -65,7 +65,7 @@ set_property company_url https://$vendor [ipx::current_core]
 ## Wipe out everything in the IP src directory
 
 ## Get the IP directory
-set component_path [get_files */component.xml]
+set component_path ${repo}/${name}_${version}/component.xml
 set ip_path [file dirname $component_path]
 
 ## Write top-level HDL file
@@ -82,13 +82,17 @@ source [file join $script_dir write_xdc.tcl]
 source [file join $script_dir write_driver_hw.tcl]
 
 # Wipe out unused stuff in example_designs folder
-foreach f [glob -directory ${ip_path}/example_designs */*] {file delete $f}
-foreach f [glob -directory ${ip_path}/example_designs *] {file delete $f}
-file delete ${ip_path}/example_designs
+foreach f [glob -nocomplain -directory ${ip_path}/example_designs */*] {file delete $f}
+foreach f [glob -nocomplain -directory ${ip_path}/example_designs *] {file delete $f}
+if {[file exists ${ip_path}/example_designs]} {
+    file delete ${ip_path}/example_designs
+}
 
 # Wipe out existing HDL files and import generated ones
-set hdl_files [get_files -filter name=~${ip_path}/hdl/*]
-remove_files [get_files -filter name=~${ip_path}/hdl/*]
+puts "info: removing hdl_files ${ip_path}"
+set hdl_files [glob -nocomplain ${ip_path}/hdl/*]
+# [get_files -filter name=~${ip_path}/hdl/*]
+remove_files $hdl_files
 foreach f $hdl_files {file delete $f}
 
 # file delete ${ip_path}/hdl

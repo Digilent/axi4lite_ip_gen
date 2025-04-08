@@ -15,7 +15,20 @@ set specdata_json [read $specfile]
 close $specfile
 set specdata [::json::json2dict $specdata_json]
 
+# # Set up IPX context
+set name [dict get $specdata ip_name]
+
+set vendor [dict get $specdata vendor]
+set version [dict get $specdata version]
+set major_version [lindex [split $version "."] 0]
+set minor_version [lindex [split $version "."] 1]
+set vlnv "${vendor}:user:${name}:$version"
+
 set driver_name ${ip_name}_v1_0
+
+# grab path to final IP
+set component_path ${repo}/${ip_name}_${version}/component.xml
+set ip_path [file dirname $component_path]
 
 set intermediate_sw_dir ${script_dir}/intermediates/${ip_name}/sw
 if {[file exists $intermediate_sw_dir] == 0} {file mkdir $intermediate_sw_dir}
@@ -26,46 +39,45 @@ foreach subdir {src data} {
 
 set sources [list]
 
-# set newsource [dict create]
-# set hwheader_path ${intermediate_sw_dir}/${driver_name}/src/${ip_name}_hw.h; # used by driver.h.tpl
-# dict set newsource filepath $hwheader_path
-# dict set newsource template ${script_dir}/tpl/driver_hw.h.tpl
-# dict set newsource template_type "tpl"
-# lappend sources $newsource
-
 set newsource [dict create]
-dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/Makefile
+dict set newsource filepath ${ip_path}/drivers/${driver_name}/src/Makefile
+dict set newsource ipxpath drivers/${driver_name}/src/Makefile
 dict set newsource template ${script_dir}/tpl/Makefile.tpl
 dict set newsource template_type "xmlish"
+dict set newsource file_type "unknown"
 lappend sources $newsource
 
 # set newsource [dict create]
-# dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/${ip_name}.c
+# dict set newsource filepath ${ip_path}/drivers//${driver_name}/src/${ip_name}.c
+# dict set newsource ipx_file src/${ip_name}.c
 # dict set newsource template ${script_dir}/tpl/driver.c.tpl
 # dict set newsource template_type "tpl"
+# dict set newsource file_type "cSource"
 # lappend sources $newsource
 
 set newsource [dict create]
-dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/src/${ip_name}.h
+dict set newsource filepath ${ip_path}/drivers/${driver_name}/src/${ip_name}.h
+dict set newsource ipxpath drivers/${driver_name}/src/${ip_name}.h
 dict set newsource template ${script_dir}/tpl/driver.h.tpl
 dict set newsource template_type "tpl"
+dict set newsource file_type "cSource"
 lappend sources $newsource
 
 set newsource [dict create]
-dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/data/${ip_name}.mdd
+dict set newsource filepath ${ip_path}/drivers/${driver_name}/data/${ip_name}.mdd
+dict set newsource ipxpath drivers/${driver_name}/data/${ip_name}.mdd
 dict set newsource template ${script_dir}/tpl/driver_mdd.tpl
 dict set newsource template_type "tpl"
+dict set newsource file_type "mdd"
 lappend sources $newsource
 
 set newsource [dict create]
-dict set newsource filepath ${intermediate_sw_dir}/${driver_name}/data/${ip_name}.tcl
+dict set newsource filepath ${ip_path}/drivers/${driver_name}/data/${ip_name}.tcl
+dict set newsource ipxpath drivers/${driver_name}/data/${ip_name}.tcl
 dict set newsource template ${script_dir}/tpl/driver_xpar.tcl.tpl
 dict set newsource template_type "xmlish"
+dict set newsource file_type "tclSource"
 lappend sources $newsource
-
-# grab path to final IP
-set component_path [get_files */component.xml]
-set ip_path [file dirname $component_path]
 
 # wipe out default driver files but leave the directories in place
 # ipx::merge_project_changes files [ipx::current_core]
@@ -75,8 +87,12 @@ foreach file [ipx::get_files -of_objects [ipx::get_file_groups xilinx_softwaredr
 ipx::remove_file_group xilinx_softwaredriver [ipx::current_core]
 # recreate the group
 ipx::add_file_group -type software_driver {} [ipx::current_core]
-set softwaredriver_group [ipx::get_file_groups xilinx_softwaredriver -of_objects [ipx::current_core]]
-# ipx::add_file D:/Github/axi4lite_ip_gen/ip_repo/ExampleIp_1.0/drivers/ExampleIp_v1_0/data/ExampleIp.mdd $softwaredriver_group
+
+foreach subdir {data src} {
+    if {[file exists ${ip_path}/drivers/${driver_name}/${subdir}] == 0} {
+        file mkdir ${ip_path}/drivers/${driver_name}/${subdir}
+    }
+}
 
 set xmlish_map "<XXXX> ${ip_name} <ip_name> ${ip_name} <interface> ${interface_name}"
 foreach srcfile $sources {
@@ -92,15 +108,8 @@ foreach srcfile $sources {
     set f [open [dict get $srcfile filepath] w]
     puts $f $output_data
     close $f
-}
 
-# add the generated files to the IP
-set file_group xilinx_softwaredriver
-foreach subdir {data src} {
-    foreach source_file [glob ${intermediate_sw_dir}/${driver_name}/${subdir}/*] {
-        add_files -norecurse -copy_to ${ip_path}/drivers/${driver_name}/${subdir} ${source_file}
-        ipx::add_file ${ip_path}/drivers/${driver_name}/${subdir}/[file tail $source_file] [ipx::get_file_groups $file_group -of_objects [ipx::current_core]]
-    }
+    ipx::add_file [dict get $srcfile filepath] [ipx::get_file_groups xilinx_softwaredriver -of_objects [ipx::current_core]]
+    set_property type [dict get $srcfile file_type] [ipx::get_files [dict get $srcfile ipxpath] -of_objects [ipx::get_file_groups xilinx_softwaredriver -of_objects [ipx::current_core]]]
+    puts "INFO: Created [dict get $srcfile ipxpath]"
 }
-
-ipx::merge_project_changes files [ipx::current_core]
