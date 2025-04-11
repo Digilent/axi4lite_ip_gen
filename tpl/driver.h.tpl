@@ -13,6 +13,7 @@
 
 % }
 
+
 % foreach register [dict get $specdata registers] {
 %   set register_name [string toupper [dict get ${register} name]]
 /* ${register_name} register bitfields */
@@ -23,10 +24,10 @@
 %     set low [dict get $bitfield low_bit]
 #define ${prefix}_${register_name}_${bitfield_name}_MASK [format 0x%x [range2mask $high $low]]
 
-
 %   }
-% }
 
+
+% }
 /* Register access macros */
 #define ${ip_name}_In32     Xil_In32
 #define ${ip_name}_Out32	Xil_Out32
