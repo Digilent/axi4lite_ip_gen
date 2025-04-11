@@ -18,7 +18,7 @@ begin
     decode: process (address)
     begin
         for i in 0 to NUM_REGS-1 loop
-            if address = std_logic_vector(to_unsigned(i, address'length)) then
+            if address(ADDR_WIDTH-1 downto 2) = std_logic_vector(to_unsigned(i, address'length - 2)) then
                 reg_en(i) <= '1';
             else
                 reg_en(i) <= '0';
